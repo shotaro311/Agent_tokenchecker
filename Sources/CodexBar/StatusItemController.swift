@@ -296,21 +296,15 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
 
     func switchAccountSubtitle(for target: UsageProvider) -> String? {
         guard self.loginTask != nil, let provider = self.activeLoginProvider, provider == target else { return nil }
+        let l10n = AppLocalization(language: self.settings.appLanguage)
+        let external = ExternalTextLocalizer(language: self.settings.appLanguage)
         let base: String
         switch self.loginPhase {
         case .idle: return nil
-        case .requesting: base = "Requesting login…"
-        case .waitingBrowser: base = "Waiting in browser…"
+        case .requesting: base = l10n.choose("Requesting login…", "ログインをリクエスト中…")
+        case .waitingBrowser: base = l10n.choose("Waiting in browser…", "ブラウザで待機中…")
         }
-        let prefix = switch provider {
-        case .codex: "Codex"
-        case .claude: "Claude"
-        case .zai: "z.ai"
-        case .gemini: "Gemini"
-        case .antigravity: "Antigravity"
-        case .cursor: "Cursor"
-        case .factory: "Droid"
-        }
+        let prefix = external.providerName(provider)
         return "\(prefix): \(base)"
     }
 

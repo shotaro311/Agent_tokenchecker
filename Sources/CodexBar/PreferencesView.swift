@@ -1,4 +1,5 @@
 import AppKit
+import CodexBarCore
 import SwiftUI
 
 enum PreferencesTab: String, Hashable {
@@ -23,26 +24,27 @@ struct PreferencesView: View {
     @State private var contentHeight: CGFloat = PreferencesTab.general.preferredHeight
 
     var body: some View {
+        let l10n = AppLocalization(language: self.settings.appLanguage)
         TabView(selection: self.$selection.tab) {
             GeneralPane(settings: self.settings, store: self.store)
-                .tabItem { Label("General", systemImage: "gearshape") }
+                .tabItem { Label(l10n.choose("General", "一般"), systemImage: "gearshape") }
                 .tag(PreferencesTab.general)
 
             ProvidersPane(settings: self.settings, store: self.store)
-                .tabItem { Label("Providers", systemImage: "square.grid.2x2") }
+                .tabItem { Label(l10n.choose("Providers", "プロバイダ"), systemImage: "square.grid.2x2") }
                 .tag(PreferencesTab.providers)
 
             AdvancedPane(settings: self.settings)
-                .tabItem { Label("Advanced", systemImage: "slider.horizontal.3") }
+                .tabItem { Label(l10n.choose("Advanced", "詳細"), systemImage: "slider.horizontal.3") }
                 .tag(PreferencesTab.advanced)
 
-            AboutPane(updater: self.updater)
-                .tabItem { Label("About", systemImage: "info.circle") }
+            AboutPane(updater: self.updater, language: self.settings.appLanguage)
+                .tabItem { Label(l10n.choose("About", "情報"), systemImage: "info.circle") }
                 .tag(PreferencesTab.about)
 
             if self.settings.debugMenuEnabled {
                 DebugPane(settings: self.settings, store: self.store)
-                    .tabItem { Label("Debug", systemImage: "ladybug") }
+                    .tabItem { Label(l10n.choose("Debug", "デバッグ"), systemImage: "ladybug") }
                     .tag(PreferencesTab.debug)
             }
         }

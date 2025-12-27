@@ -22,13 +22,18 @@ enum RefreshFrequency: String, CaseIterable, Identifiable {
         }
     }
 
-    var label: String {
+    func label(language: AppLanguage) -> String {
         switch self {
-        case .manual: "Manual"
-        case .oneMinute: "1 min"
-        case .twoMinutes: "2 min"
-        case .fiveMinutes: "5 min"
-        case .fifteenMinutes: "15 min"
+        case .manual:
+            return language == .japanese ? "手動" : "Manual"
+        case .oneMinute:
+            return language == .japanese ? "1分" : "1 min"
+        case .twoMinutes:
+            return language == .japanese ? "2分" : "2 min"
+        case .fiveMinutes:
+            return language == .japanese ? "5分" : "5 min"
+        case .fifteenMinutes:
+            return language == .japanese ? "15分" : "15 min"
         }
     }
 }
@@ -45,6 +50,13 @@ final class SettingsStore {
 
     var refreshFrequency: RefreshFrequency {
         didSet { self.userDefaults.set(self.refreshFrequency.rawValue, forKey: "refreshFrequency") }
+    }
+
+    var appLanguage: AppLanguage {
+        didSet {
+            self.userDefaults.set(self.appLanguage.rawValue, forKey: "appLanguage")
+            AppLanguageStore.save(self.appLanguage)
+        }
     }
 
     var launchAtLogin: Bool {
@@ -170,6 +182,7 @@ final class SettingsStore {
     var menuObservationToken: Int {
         _ = self.providerOrderRaw
         _ = self.refreshFrequency
+        _ = self.appLanguage
         _ = self.launchAtLogin
         _ = self.debugMenuEnabled
         _ = self.statusChecksEnabled
@@ -205,6 +218,13 @@ final class SettingsStore {
         self.providerOrderRaw = userDefaults.stringArray(forKey: "providerOrder") ?? []
         let raw = userDefaults.string(forKey: "refreshFrequency") ?? RefreshFrequency.fiveMinutes.rawValue
         self.refreshFrequency = RefreshFrequency(rawValue: raw) ?? .fiveMinutes
+        let languageRaw = userDefaults.string(forKey: "appLanguage")
+        let resolvedLanguage = AppLanguage(rawValue: languageRaw ?? "") ?? .japanese
+        self.appLanguage = resolvedLanguage
+        if languageRaw == nil {
+            self.userDefaults.set(resolvedLanguage.rawValue, forKey: "appLanguage")
+        }
+        AppLanguageStore.save(resolvedLanguage)
         self.launchAtLogin = userDefaults.object(forKey: "launchAtLogin") as? Bool ?? false
         self.debugMenuEnabled = userDefaults.object(forKey: "debugMenuEnabled") as? Bool ?? false
         self.debugLoadingPatternRaw = userDefaults.string(forKey: "debugLoadingPattern")

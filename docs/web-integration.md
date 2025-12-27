@@ -1,35 +1,34 @@
 ---
-summary: "OpenAI web dashboard integration for Codex (cookies, privacy, and scraping)."
+summary: "Codex向けOpenAI Webダッシュボード連携（Cookie、プライバシー、スクレイプ）。"
 read_when:
-  - Changing OpenAI web integration or dashboard parsing
-  - Updating browser cookie import behavior
-  - Debugging OpenAI web access issues
+  - OpenAI Web連携やダッシュボード解析を変更するとき
+  - ブラウザCookie取り込み挙動を更新するとき
+  - OpenAI Webアクセスの不具合を調査するとき
 ---
 
-# OpenAI web integration (Codex)
+# OpenAI Web連携（Codex）
 
-## What it adds
-- Usage limits (5‑hour + weekly).
-- Credits remaining (balance).
-- Code review remaining (%).
-- Usage breakdown (dashboard chart).
-- Credits usage history table (when present).
+## 追加される内容
+- 使用量上限（5時間 + 週間）。
+- 残りクレジット（残高）。
+- コードレビュー残量（%）。
+- 使用量内訳（ダッシュボードチャート）。
+- クレジット使用履歴テーブル（存在する場合）。
 
-When enabled, CodexBar uses the web dashboard for Codex usage + credits and only falls back to the Codex CLI when no matching
-browser cookies are found.
+有効時、CodexBarはCodexの使用量 + クレジットをWebダッシュボードから取得し、対応するブラウザCookieが見つからない場合のみCodex CLIにフォールバックします。
 
-## Opt-in + privacy
-- Toggle: Settings → Providers → “Use Codex via web”.
-- Reuses existing browser cookies; no credentials stored.
-- Web requests go to `chatgpt.com` (same as your browser session).
+## オプトイン + プライバシー
+- トグル: 設定 → プロバイダ → 「WebでCodexを利用」。
+- 既存のブラウザCookieを再利用し、認証情報は保存しません。
+- Webリクエストは `chatgpt.com` に送信（ブラウザセッションと同じ）。
 
-## Cookie/session model
-- Import order: Safari → Chrome → Firefox (Safari first to avoid Chrome Keychain prompts when Safari matches).
-- WebKit uses per-email `WKWebsiteDataStore` so multiple accounts can coexist.
-- Email mismatch: if browser email ≠ Codex CLI email, treat as not logged in for that account (cookies retained for later match).
+## Cookie/セッションモデル
+- 取り込み順: Safari → Chrome → Firefox（Safariが一致した場合にChromeのKeychainプロンプトを回避するため）。
+- WebKitはメールアドレスごとの `WKWebsiteDataStore` を使うため、複数アカウントが共存できます。
+- メール不一致: ブラウザのメール ≠ Codex CLIのメールの場合、そのアカウントでは未ログイン扱い（Cookieは後日の一致のため保持）。
 
-## Troubleshooting
-- Safari cookie access may require Full Disk Access; Settings UI links to the system pane.
-- Dashboard layout changes can break scraping; errors surface in Settings with a short body sample.
+## トラブルシューティング
+- SafariのCookieアクセスにはフルディスクアクセスが必要な場合があります（設定UIからシステムの設定を開けます）。
+- ダッシュボードのレイアウト変更でスクレイプが壊れる可能性があり、エラーは設定に短い本文サンプル付きで表示されます。
 
-See also: `docs/providers.md`.
+関連: `docs/providers.md`。

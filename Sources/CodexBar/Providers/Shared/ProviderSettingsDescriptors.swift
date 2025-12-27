@@ -14,6 +14,7 @@ struct ProviderSettingsContext {
     let provider: UsageProvider
     let settings: SettingsStore
     let store: UsageStore
+    let language: AppLanguage
 
     let boolBinding: (ReferenceWritableKeyPath<SettingsStore, Bool>) -> Binding<Bool>
     let stringBinding: (ReferenceWritableKeyPath<SettingsStore, String>) -> Binding<String>
@@ -25,6 +26,8 @@ struct ProviderSettingsContext {
     let setLastAppActiveRunAt: (String, Date?) -> Void
 
     let requestConfirmation: (ProviderSettingsConfirmation) -> Void
+
+    var localization: AppLocalization { AppLocalization(language: self.language) }
 }
 
 /// Shared confirmation alert descriptor.

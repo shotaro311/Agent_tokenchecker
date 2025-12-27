@@ -1,21 +1,24 @@
+import CodexBarCore
 import Foundation
 
 enum RelativeTimeFormatters {
     @MainActor
-    static let full: RelativeDateTimeFormatter = {
+    static func full(language: AppLanguage) -> RelativeDateTimeFormatter {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
+        formatter.locale = language.locale
         return formatter
-    }()
+    }
 }
 
 extension Date {
     @MainActor
-    func relativeDescription(now: Date = .now) -> String {
+    func relativeDescription(now: Date = .now, language: AppLanguage = .english) -> String {
         let seconds = abs(now.timeIntervalSince(self))
         if seconds < 15 {
-            return "just now"
+            let l10n = AppLocalization(language: language)
+            return l10n.choose("just now", "たった今")
         }
-        return RelativeTimeFormatters.full.localizedString(for: self, relativeTo: now)
+        return RelativeTimeFormatters.full(language: language).localizedString(for: self, relativeTo: now)
     }
 }

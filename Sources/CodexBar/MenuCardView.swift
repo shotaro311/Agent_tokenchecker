@@ -9,17 +9,21 @@ struct UsageMenuCardView: View {
             case left
             case used
 
-            var labelSuffix: String {
+            func labelSuffix(language: AppLanguage) -> String {
                 switch self {
-                case .left: "left"
-                case .used: "used"
+                case .left:
+                    return language == .japanese ? "残り" : "left"
+                case .used:
+                    return language == .japanese ? "使用済み" : "used"
                 }
             }
 
-            var accessibilityLabel: String {
+            func accessibilityLabel(language: AppLanguage) -> String {
                 switch self {
-                case .left: "Usage remaining"
-                case .used: "Usage used"
+                case .left:
+                    return language == .japanese ? "残りの使用量" : "Usage remaining"
+                case .used:
+                    return language == .japanese ? "使用済みの使用量" : "Usage used"
                 }
             }
         }
@@ -32,8 +36,13 @@ struct UsageMenuCardView: View {
             let resetText: String?
             let detailText: String?
 
-            var percentLabel: String {
-                String(format: "%.0f%% %@", self.percent, self.percentStyle.labelSuffix)
+            func percentLabel(language: AppLanguage) -> String {
+                let value = String(format: "%.0f%%", self.percent)
+                let suffix = self.percentStyle.labelSuffix(language: language)
+                if language == .japanese {
+                    return "\(suffix)\(value)"
+                }
+                return "\(value) \(suffix)"
             }
         }
 
@@ -71,6 +80,7 @@ struct UsageMenuCardView: View {
         let tokenUsage: TokenUsageSection?
         let placeholder: String?
         let progressColor: Color
+        let language: AppLanguage
     }
 
     let model: Model
@@ -113,9 +123,10 @@ struct UsageMenuCardView: View {
                                     UsageProgressBar(
                                         percent: metric.percent,
                                         tint: self.model.progressColor,
-                                        accessibilityLabel: metric.percentStyle.accessibilityLabel)
+                                        accessibilityLabel: metric.percentStyle.accessibilityLabel(
+                                            language: self.model.language))
                                     HStack(alignment: .firstTextBaseline) {
-                                        Text(metric.percentLabel)
+                                        Text(metric.percentLabel(language: self.model.language))
                                             .font(.footnote)
                                         Spacer()
                                         if let reset = metric.resetText {
@@ -143,7 +154,8 @@ struct UsageMenuCardView: View {
                             creditsRemaining: self.model.creditsRemaining,
                             hintText: self.model.creditsHintText,
                             hintCopyText: self.model.creditsHintCopyText,
-                            progressColor: self.model.progressColor)
+                            progressColor: self.model.progressColor,
+                            language: self.model.language)
                     }
                     if hasCredits, hasCost {
                         Divider()
@@ -151,14 +163,15 @@ struct UsageMenuCardView: View {
                     if let providerCost = self.model.providerCost {
                         ProviderCostContent(
                             section: providerCost,
-                            progressColor: self.model.progressColor)
+                            progressColor: self.model.progressColor,
+                            language: self.model.language)
                     }
                     if hasProviderCost, self.model.tokenUsage != nil {
                         Divider()
                     }
                     if let tokenUsage = self.model.tokenUsage {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Cost")
+                            Text(AppLocalization(language: self.model.language).choose("Cost", "コスト"))
                                 .font(.body)
                                 .fontWeight(.medium)
                             Text(tokenUsage.sessionLine)
@@ -248,9 +261,11 @@ private struct UsageMenuCardHeaderView: View {
 private struct ProviderCostContent: View {
     let section: UsageMenuCardView.Model.ProviderCostSection
     let progressColor: Color
+    let language: AppLanguage
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     var body: some View {
+        let l10n = AppLocalization(language: self.language)
         VStack(alignment: .leading, spacing: 6) {
             Text(self.section.title)
                 .font(.body)
@@ -258,12 +273,13 @@ private struct ProviderCostContent: View {
             UsageProgressBar(
                 percent: self.section.percentUsed,
                 tint: self.progressColor,
-                accessibilityLabel: "Extra usage spent")
+                accessibilityLabel: l10n.choose("Extra usage spent", "追加使用量の利用済み"))
             HStack(alignment: .firstTextBaseline) {
                 Text(self.section.spendLine)
                     .font(.footnote)
                 Spacer()
-                Text(String(format: "%.0f%% used", min(100, max(0, self.section.percentUsed))))
+                let percentText = String(format: "%.0f%%", min(100, max(0, self.section.percentUsed)))
+                Text(l10n.choose("\(percentText) used", "使用済み\(percentText)"))
                     .font(.footnote)
                     .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
             }
@@ -314,9 +330,10 @@ struct UsageMenuCardUsageSectionView: View {
                         UsageProgressBar(
                             percent: metric.percent,
                             tint: self.model.progressColor,
-                            accessibilityLabel: metric.percentStyle.accessibilityLabel)
+                            accessibilityLabel: metric.percentStyle.accessibilityLabel(
+                                language: self.model.language))
                         HStack(alignment: .firstTextBaseline) {
-                            Text(metric.percentLabel)
+                            Text(metric.percentLabel(language: self.model.language))
                                 .font(.footnote)
                             Spacer()
                             if let reset = metric.resetText {
@@ -374,7 +391,8 @@ struct UsageMenuCardCreditsSectionView: View {
                     creditsRemaining: self.model.creditsRemaining,
                     hintText: self.model.creditsHintText,
                     hintCopyText: self.model.creditsHintCopyText,
-                    progressColor: self.model.progressColor)
+                    progressColor: self.model.progressColor,
+                    language: self.model.language)
                 if self.showBottomDivider {
                     Divider()
                 }
@@ -395,6 +413,7 @@ private struct CreditsBarContent: View {
     let hintText: String?
     let hintCopyText: String?
     let progressColor: Color
+    let language: AppLanguage
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     private var percentLeft: Double? {
@@ -404,20 +423,22 @@ private struct CreditsBarContent: View {
     }
 
     private var scaleText: String {
-        let scale = UsageFormatter.tokenCountString(Int(Self.fullScaleTokens))
-        return "\(scale) tokens"
+        let scale = UsageFormatter.tokenCountString(Int(Self.fullScaleTokens), language: self.language)
+        let l10n = AppLocalization(language: self.language)
+        return l10n.choose("\(scale) tokens", "\(scale) トークン")
     }
 
     var body: some View {
+        let l10n = AppLocalization(language: self.language)
         VStack(alignment: .leading, spacing: 6) {
-            Text("Credits")
+            Text(l10n.choose("Credits", "クレジット"))
                 .font(.body)
                 .fontWeight(.medium)
             if let percentLeft {
                 UsageProgressBar(
                     percent: percentLeft,
                     tint: self.progressColor,
-                    accessibilityLabel: "Credits remaining")
+                    accessibilityLabel: l10n.choose("Credits remaining", "クレジット残量"))
                 HStack(alignment: .firstTextBaseline) {
                     Text(self.creditsText)
                         .font(.caption)
@@ -452,13 +473,14 @@ struct UsageMenuCardCostSectionView: View {
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     var body: some View {
+        let l10n = AppLocalization(language: self.model.language)
         let hasTokenCost = self.model.tokenUsage != nil
         return Group {
             if hasTokenCost {
                 VStack(alignment: .leading, spacing: 10) {
                     if let tokenUsage = self.model.tokenUsage {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Cost")
+                            Text(l10n.choose("Cost", "コスト"))
                                 .font(.body)
                                 .fontWeight(.medium)
                             Text(tokenUsage.sessionLine)
@@ -505,7 +527,8 @@ struct UsageMenuCardExtraUsageSectionView: View {
             if let providerCost = self.model.providerCost {
                 ProviderCostContent(
                     section: providerCost,
-                    progressColor: self.model.progressColor)
+                    progressColor: self.model.progressColor,
+                    language: self.model.language)
                     .padding(.horizontal, 16)
                     .padding(.top, self.topPadding)
                     .padding(.bottom, self.bottomPadding)
@@ -535,39 +558,60 @@ extension UsageMenuCardView.Model {
         let tokenCostUsageEnabled: Bool
         let showOptionalCreditsAndExtraUsage: Bool
         let now: Date
+        let language: AppLanguage
     }
 
     static func make(_ input: Input) -> UsageMenuCardView.Model {
+        let l10n = AppLocalization(language: input.language)
+        let external = ExternalTextLocalizer(language: input.language)
         let email = Self.email(
             for: input.provider,
             snapshot: input.snapshot,
             account: input.account)
-        let planText = Self.plan(for: input.provider, snapshot: input.snapshot, account: input.account)
-        let metrics = Self.metrics(input: input)
+        let planText = Self.plan(
+            for: input.provider,
+            snapshot: input.snapshot,
+            account: input.account,
+            language: input.language)
+        let metrics = Self.metrics(input: input, language: input.language)
         let creditsText: String? = if input.provider == .codex, !input.showOptionalCreditsAndExtraUsage {
             nil
         } else {
-            Self.creditsLine(metadata: input.metadata, credits: input.credits, error: input.creditsError)
+            Self.creditsLine(
+                metadata: input.metadata,
+                credits: input.credits,
+                error: input.creditsError,
+                language: input.language)
         }
-        let creditsHintText = Self.dashboardHint(provider: input.provider, error: input.dashboardError)
+        let creditsHintText = Self.dashboardHint(
+            provider: input.provider,
+            error: input.dashboardError,
+            language: input.language)
         let providerCost: ProviderCostSection? = if input.provider == .claude, !input.showOptionalCreditsAndExtraUsage {
             nil
         } else {
-            Self.providerCostSection(provider: input.provider, cost: input.snapshot?.providerCost)
+            Self.providerCostSection(
+                provider: input.provider,
+                cost: input.snapshot?.providerCost,
+                language: input.language)
         }
         let tokenUsage = Self.tokenUsageSection(
             provider: input.provider,
             enabled: input.tokenCostUsageEnabled,
             snapshot: input.tokenSnapshot,
-            error: input.tokenError)
+            error: input.tokenError,
+            language: input.language)
         let subtitle = Self.subtitle(
             snapshot: input.snapshot,
             isRefreshing: input.isRefreshing,
-            lastError: input.lastError)
-        let placeholder = input.snapshot == nil && !input.isRefreshing && input.lastError == nil ? "No usage yet" : nil
+            lastError: input.lastError,
+            language: input.language)
+        let placeholder = input.snapshot == nil && !input.isRefreshing && input.lastError == nil
+            ? l10n.choose("No usage yet", "まだ使用量がありません")
+            : nil
 
         return UsageMenuCardView.Model(
-            providerName: input.metadata.displayName,
+            providerName: external.providerName(input.provider),
             email: email,
             subtitleText: subtitle.text,
             subtitleStyle: subtitle.style,
@@ -576,11 +620,12 @@ extension UsageMenuCardView.Model {
             creditsText: creditsText,
             creditsRemaining: input.credits?.remaining,
             creditsHintText: creditsHintText,
-            creditsHintCopyText: (input.dashboardError?.isEmpty ?? true) ? nil : input.dashboardError,
+            creditsHintCopyText: (creditsHintText?.isEmpty ?? true) ? nil : creditsHintText,
             providerCost: providerCost,
             tokenUsage: tokenUsage,
             placeholder: placeholder,
-            progressColor: Self.progressColor(for: input.provider))
+            progressColor: Self.progressColor(for: input.provider),
+            language: input.language)
     }
 
     private static func email(
@@ -598,74 +643,90 @@ extension UsageMenuCardView.Model {
         return ""
     }
 
-    private static func plan(for provider: UsageProvider, snapshot: UsageSnapshot?, account: AccountInfo) -> String? {
+    private static func plan(
+        for provider: UsageProvider,
+        snapshot: UsageSnapshot?,
+        account: AccountInfo,
+        language: AppLanguage) -> String?
+    {
         switch provider {
         case .codex:
-            if let plan = snapshot?.loginMethod, !plan.isEmpty { return self.planDisplay(plan) }
-            if let plan = account.plan, !plan.isEmpty { return Self.planDisplay(plan) }
+            if let plan = snapshot?.loginMethod, !plan.isEmpty { return self.planDisplay(plan, language: language) }
+            if let plan = account.plan, !plan.isEmpty { return Self.planDisplay(plan, language: language) }
         case .claude, .zai, .gemini, .antigravity, .cursor, .factory:
-            if let plan = snapshot?.loginMethod, !plan.isEmpty { return self.planDisplay(plan) }
+            if let plan = snapshot?.loginMethod, !plan.isEmpty { return self.planDisplay(plan, language: language) }
         }
         return nil
     }
 
-    private static func planDisplay(_ text: String) -> String {
+    private static func planDisplay(_ text: String, language: AppLanguage) -> String {
+        let external = ExternalTextLocalizer(language: language)
         let cleaned = UsageFormatter.cleanPlanName(text)
-        return cleaned.isEmpty ? text : cleaned
+        let base = cleaned.isEmpty ? text : cleaned
+        return external.localizedPlanName(base)
     }
 
     private static func subtitle(
         snapshot: UsageSnapshot?,
         isRefreshing: Bool,
-        lastError: String?) -> (text: String, style: SubtitleStyle)
+        lastError: String?,
+        language: AppLanguage) -> (text: String, style: SubtitleStyle)
     {
+        let l10n = AppLocalization(language: language)
+        let external = ExternalTextLocalizer(language: language)
         if let lastError, !lastError.isEmpty {
-            return (lastError.trimmingCharacters(in: .whitespacesAndNewlines), .error)
+            let localized = external.localizedErrorMessage(lastError)
+            return (localized.trimmingCharacters(in: .whitespacesAndNewlines), .error)
         }
 
         if isRefreshing, snapshot == nil {
-            return ("Refreshing...", .loading)
+            return (l10n.choose("Refreshing...", "更新中..."), .loading)
         }
 
         if let updated = snapshot?.updatedAt {
-            return (UsageFormatter.updatedString(from: updated), .info)
+            return (UsageFormatter.updatedString(from: updated, language: language), .info)
         }
 
-        return ("Not fetched yet", .info)
+        return (l10n.choose("Not fetched yet", "まだ取得していません"), .info)
     }
 
-    private static func metrics(input: Input) -> [Metric] {
+    private static func metrics(input: Input, language: AppLanguage) -> [Metric] {
         guard let snapshot = input.snapshot else { return [] }
+        let external = ExternalTextLocalizer(language: language)
         var metrics: [Metric] = []
         let percentStyle: PercentStyle = input.usageBarsShowUsed ? .used : .left
         let zaiUsage = input.provider == .zai ? snapshot.zaiUsage : nil
-        let zaiTokenDetail = Self.zaiLimitDetailText(limit: zaiUsage?.tokenLimit)
-        let zaiTimeDetail = Self.zaiLimitDetailText(limit: zaiUsage?.timeLimit)
+        let zaiTokenDetail = Self.zaiLimitDetailText(limit: zaiUsage?.tokenLimit, language: language)
+        let zaiTimeDetail = Self.zaiLimitDetailText(limit: zaiUsage?.timeLimit, language: language)
         metrics.append(Metric(
             id: "primary",
-            title: input.metadata.sessionLabel,
+            title: external.localizedProviderLabel(input.metadata.sessionLabel),
             percent: Self.clamped(
                 input.usageBarsShowUsed ? snapshot.primary.usedPercent : snapshot.primary.remainingPercent),
             percentStyle: percentStyle,
-            resetText: Self.resetText(for: snapshot.primary, prefersCountdown: true),
+            resetText: Self.resetText(for: snapshot.primary, prefersCountdown: true, language: language),
             detailText: input.provider == .zai ? zaiTokenDetail : nil))
         if let weekly = snapshot.secondary {
-            let paceText = UsagePaceText.weekly(provider: input.provider, window: weekly, now: input.now)
+            let paceText = UsagePaceText.weekly(
+                provider: input.provider,
+                window: weekly,
+                now: input.now,
+                language: language)
             metrics.append(Metric(
                 id: "secondary",
-                title: input.metadata.weeklyLabel,
+                title: external.localizedProviderLabel(input.metadata.weeklyLabel),
                 percent: Self.clamped(input.usageBarsShowUsed ? weekly.usedPercent : weekly.remainingPercent),
                 percentStyle: percentStyle,
-                resetText: Self.resetText(for: weekly, prefersCountdown: true),
+                resetText: Self.resetText(for: weekly, prefersCountdown: true, language: language),
                 detailText: input.provider == .zai ? zaiTimeDetail : paceText))
         }
         if input.metadata.supportsOpus, let opus = snapshot.tertiary {
             metrics.append(Metric(
                 id: "tertiary",
-                title: input.metadata.opusLabel ?? "Sonnet",
+                title: external.localizedProviderLabel(input.metadata.opusLabel ?? "Sonnet"),
                 percent: Self.clamped(input.usageBarsShowUsed ? opus.usedPercent : opus.remainingPercent),
                 percentStyle: percentStyle,
-                resetText: Self.resetText(for: opus, prefersCountdown: true),
+                resetText: Self.resetText(for: opus, prefersCountdown: true, language: language),
                 detailText: nil))
         }
 
@@ -673,7 +734,7 @@ extension UsageMenuCardView.Model {
             let percent = input.usageBarsShowUsed ? (100 - remaining) : remaining
             metrics.append(Metric(
                 id: "code-review",
-                title: "Code review",
+                title: AppLocalization(language: language).choose("Code review", "コードレビュー"),
                 percent: Self.clamped(percent),
                 percentStyle: percentStyle,
                 resetText: nil,
@@ -682,89 +743,118 @@ extension UsageMenuCardView.Model {
         return metrics
     }
 
-    private static func zaiLimitDetailText(limit: ZaiLimitEntry?) -> String? {
+    private static func zaiLimitDetailText(limit: ZaiLimitEntry?, language: AppLanguage) -> String? {
         guard let limit else { return nil }
-        let currentStr = UsageFormatter.tokenCountString(limit.currentValue)
-        let usageStr = UsageFormatter.tokenCountString(limit.usage)
-        let remainingStr = UsageFormatter.tokenCountString(limit.remaining)
-        return "\(currentStr) / \(usageStr) (\(remainingStr) remaining)"
+        let l10n = AppLocalization(language: language)
+        let currentStr = UsageFormatter.tokenCountString(limit.currentValue, language: language)
+        let usageStr = UsageFormatter.tokenCountString(limit.usage, language: language)
+        let remainingStr = UsageFormatter.tokenCountString(limit.remaining, language: language)
+        return l10n.choose(
+            "\(currentStr) / \(usageStr) (\(remainingStr) remaining)",
+            "\(currentStr) / \(usageStr)（残り\(remainingStr)）")
     }
 
     private static func creditsLine(
         metadata: ProviderMetadata,
         credits: CreditsSnapshot?,
-        error: String?) -> String?
+        error: String?,
+        language: AppLanguage) -> String?
     {
         guard metadata.supportsCredits else { return nil }
+        let external = ExternalTextLocalizer(language: language)
         if let credits {
-            return UsageFormatter.creditsString(from: credits.remaining)
+            return UsageFormatter.creditsString(from: credits.remaining, language: language)
         }
         if let error, !error.isEmpty {
-            return error.trimmingCharacters(in: .whitespacesAndNewlines)
+            let localized = external.localizedErrorMessage(error)
+            return localized.trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return metadata.creditsHint
+        return external.localizedErrorMessage(metadata.creditsHint)
     }
 
-    private static func dashboardHint(provider: UsageProvider, error: String?) -> String? {
+    private static func dashboardHint(
+        provider: UsageProvider,
+        error: String?,
+        language: AppLanguage) -> String?
+    {
         guard provider == .codex else { return nil }
         guard let error, !error.isEmpty else { return nil }
-        return error
+        return ExternalTextLocalizer(language: language).localizedErrorMessage(error)
     }
 
     private static func tokenUsageSection(
         provider: UsageProvider,
         enabled: Bool,
         snapshot: CCUsageTokenSnapshot?,
-        error: String?) -> TokenUsageSection?
+        error: String?,
+        language: AppLanguage) -> TokenUsageSection?
     {
         guard provider == .codex || provider == .claude else { return nil }
         guard enabled else { return nil }
         guard let snapshot else { return nil }
 
-        let sessionCost = snapshot.sessionCostUSD.map { UsageFormatter.usdString($0) } ?? "—"
-        let sessionTokens = snapshot.sessionTokens.map { UsageFormatter.tokenCountString($0) }
+        let l10n = AppLocalization(language: language)
+        let external = ExternalTextLocalizer(language: language)
+        let sessionCost = snapshot.sessionCostUSD.map {
+            UsageFormatter.usdString($0, language: language)
+        } ?? "—"
+        let sessionTokens = snapshot.sessionTokens.map { UsageFormatter.tokenCountString($0, language: language) }
         let sessionLine: String = {
             if let sessionTokens {
-                return "Today: \(sessionCost) · \(sessionTokens) tokens"
+                return l10n.choose(
+                    "Today: \(sessionCost) · \(sessionTokens) tokens",
+                    "今日: \(sessionCost) · \(sessionTokens) トークン")
             }
-            return "Today: \(sessionCost)"
+            return l10n.choose("Today: \(sessionCost)", "今日: \(sessionCost)")
         }()
 
-        let monthCost = snapshot.last30DaysCostUSD.map { UsageFormatter.usdString($0) } ?? "—"
+        let monthCost = snapshot.last30DaysCostUSD.map {
+            UsageFormatter.usdString($0, language: language)
+        } ?? "—"
         let fallbackTokens = snapshot.daily.compactMap(\.totalTokens).reduce(0, +)
         let monthTokensValue = snapshot.last30DaysTokens ?? (fallbackTokens > 0 ? fallbackTokens : nil)
-        let monthTokens = monthTokensValue.map { UsageFormatter.tokenCountString($0) }
+        let monthTokens = monthTokensValue.map { UsageFormatter.tokenCountString($0, language: language) }
         let monthLine: String = {
             if let monthTokens {
-                return "Last 30 days: \(monthCost) · \(monthTokens) tokens"
+                return l10n.choose(
+                    "Last 30 days: \(monthCost) · \(monthTokens) tokens",
+                    "直近30日: \(monthCost) · \(monthTokens) トークン")
             }
-            return "Last 30 days: \(monthCost)"
+            return l10n.choose("Last 30 days: \(monthCost)", "直近30日: \(monthCost)")
         }()
-        let err = (error?.isEmpty ?? true) ? nil : error
+        let err = (error?.isEmpty ?? true) ? nil : external.localizedErrorMessage(error ?? "")
         return TokenUsageSection(
             sessionLine: sessionLine,
             monthLine: monthLine,
             hintLine: nil,
             errorLine: err,
-            errorCopyText: (error?.isEmpty ?? true) ? nil : error)
+            errorCopyText: (error?.isEmpty ?? true) ? nil : err)
     }
 
     private static func providerCostSection(
         provider: UsageProvider,
-        cost: ProviderCostSnapshot?) -> ProviderCostSection?
+        cost: ProviderCostSnapshot?,
+        language: AppLanguage) -> ProviderCostSection?
     {
         guard provider == .claude else { return nil }
         guard let cost else { return nil }
         guard cost.limit > 0 else { return nil }
 
-        let used = UsageFormatter.currencyString(cost.used, currencyCode: cost.currencyCode)
-        let limit = UsageFormatter.currencyString(cost.limit, currencyCode: cost.currencyCode)
+        let l10n = AppLocalization(language: language)
+        let used = UsageFormatter.currencyString(
+            cost.used,
+            currencyCode: cost.currencyCode,
+            language: language)
+        let limit = UsageFormatter.currencyString(
+            cost.limit,
+            currencyCode: cost.currencyCode,
+            language: language)
         let percentUsed = Self.clamped((cost.used / cost.limit) * 100)
 
         return ProviderCostSection(
-            title: "Extra usage",
+            title: l10n.choose("Extra usage", "追加使用量"),
             percentUsed: percentUsed,
-            spendLine: "This month: \(used) / \(limit)")
+            spendLine: l10n.choose("This month: \(used) / \(limit)", "今月: \(used) / \(limit)"))
     }
 
     private static func clamped(_ value: Double) -> Double {
@@ -790,15 +880,28 @@ extension UsageMenuCardView.Model {
         }
     }
 
-    private static func resetText(for window: RateWindow, prefersCountdown: Bool) -> String? {
+    private static func resetText(
+        for window: RateWindow,
+        prefersCountdown: Bool,
+        language: AppLanguage) -> String?
+    {
+        let l10n = AppLocalization(language: language)
         if let date = window.resetsAt {
             if prefersCountdown {
-                return "Resets \(UsageFormatter.resetCountdownDescription(from: date))"
+                let countdown = UsageFormatter.resetCountdownDescription(from: date, language: language)
+                return l10n.choose("Resets \(countdown)", "リセット: \(countdown)")
             }
-            return "Resets \(UsageFormatter.resetDescription(from: date))"
+            let reset = UsageFormatter.resetDescription(from: date, language: language)
+            return l10n.choose("Resets \(reset)", "リセット: \(reset)")
         }
 
         if let desc = window.resetDescription, !desc.isEmpty {
+            if language == .japanese {
+                return desc
+                    .replacingOccurrences(of: "tomorrow", with: "明日", options: [.caseInsensitive])
+                    .replacingOccurrences(of: "now", with: "いま", options: [.caseInsensitive])
+                    .replacingOccurrences(of: "in ", with: "あと", options: [.caseInsensitive])
+            }
             return desc
         }
         return nil

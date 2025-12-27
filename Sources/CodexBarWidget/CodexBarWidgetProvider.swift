@@ -10,7 +10,7 @@ enum ProviderChoice: String, AppEnum {
     case antigravity
     case zai
 
-    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Provider")
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "プロバイダ")
 
     static let caseDisplayRepresentations: [ProviderChoice: DisplayRepresentation] = [
         .codex: DisplayRepresentation(title: "Codex"),
@@ -48,20 +48,20 @@ enum CompactMetric: String, AppEnum {
     case todayCost
     case last30DaysCost
 
-    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Metric")
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "指標")
 
     static let caseDisplayRepresentations: [CompactMetric: DisplayRepresentation] = [
-        .credits: DisplayRepresentation(title: "Credits left"),
-        .todayCost: DisplayRepresentation(title: "Today cost"),
-        .last30DaysCost: DisplayRepresentation(title: "30d cost"),
+        .credits: DisplayRepresentation(title: "残りクレジット"),
+        .todayCost: DisplayRepresentation(title: "今日のコスト"),
+        .last30DaysCost: DisplayRepresentation(title: "30日間のコスト"),
     ]
 }
 
 struct ProviderSelectionIntent: AppIntent, WidgetConfigurationIntent {
-    static let title: LocalizedStringResource = "Provider"
-    static let description = IntentDescription("Select the provider to display in the widget.")
+    static let title: LocalizedStringResource = "プロバイダ"
+    static let description = IntentDescription("ウィジェットに表示するプロバイダを選択します。")
 
-    @Parameter(title: "Provider")
+    @Parameter(title: "プロバイダ")
     var provider: ProviderChoice
 
     init() {
@@ -70,10 +70,10 @@ struct ProviderSelectionIntent: AppIntent, WidgetConfigurationIntent {
 }
 
 struct SwitchWidgetProviderIntent: AppIntent {
-    static let title: LocalizedStringResource = "Switch Provider"
-    static let description = IntentDescription("Switch the provider shown in the widget.")
+    static let title: LocalizedStringResource = "プロバイダを切り替え"
+    static let description = IntentDescription("ウィジェットに表示するプロバイダを切り替えます。")
 
-    @Parameter(title: "Provider")
+    @Parameter(title: "プロバイダ")
     var provider: ProviderChoice
 
     init() {}
@@ -90,13 +90,13 @@ struct SwitchWidgetProviderIntent: AppIntent {
 }
 
 struct CompactMetricSelectionIntent: AppIntent, WidgetConfigurationIntent {
-    static let title: LocalizedStringResource = "Provider + Metric"
-    static let description = IntentDescription("Select the provider and metric to display.")
+    static let title: LocalizedStringResource = "プロバイダ + 指標"
+    static let description = IntentDescription("表示するプロバイダと指標を選択します。")
 
-    @Parameter(title: "Provider")
+    @Parameter(title: "プロバイダ")
     var provider: ProviderChoice
 
-    @Parameter(title: "Metric")
+    @Parameter(title: "指標")
     var metric: CompactMetric
 
     init() {

@@ -2,41 +2,66 @@ import CodexBarCore
 import SwiftUI
 import WidgetKit
 
+private struct WidgetLocalization {
+    let language: AppLanguage
+    let l10n: AppLocalization
+    let external: ExternalTextLocalizer
+
+    init(language: AppLanguage) {
+        self.language = language
+        self.l10n = AppLocalization(language: language)
+        self.external = ExternalTextLocalizer(language: language)
+    }
+
+    static func current(bundleID: String? = Bundle.main.bundleIdentifier) -> WidgetLocalization {
+        WidgetLocalization(language: AppLanguageStore.load(bundleID: bundleID))
+    }
+
+    func text(_ english: String, _ japanese: String) -> String {
+        self.l10n.choose(english, japanese)
+    }
+}
+
 struct CodexBarUsageWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: CodexBarWidgetEntry
+    private var localization: WidgetLocalization { WidgetLocalization.current() }
 
     var body: some View {
         let providerEntry = self.entry.snapshot.entries.first { $0.provider == self.entry.provider }
+        let localization = self.localization
         ZStack {
             Color.black.opacity(0.02)
             if let providerEntry {
-                self.content(providerEntry: providerEntry)
+                self.content(providerEntry: providerEntry, localization: localization)
             } else {
-                self.emptyState
+                self.emptyState(localization: localization)
             }
         }
         .containerBackground(.fill.tertiary, for: .widget)
     }
 
     @ViewBuilder
-    private func content(providerEntry: WidgetSnapshot.ProviderEntry) -> some View {
+    private func content(
+        providerEntry: WidgetSnapshot.ProviderEntry,
+        localization: WidgetLocalization) -> some View
+    {
         switch self.family {
         case .systemSmall:
-            SmallUsageView(entry: providerEntry)
+            SmallUsageView(entry: providerEntry, localization: localization)
         case .systemMedium:
-            MediumUsageView(entry: providerEntry)
+            MediumUsageView(entry: providerEntry, localization: localization)
         default:
-            LargeUsageView(entry: providerEntry)
+            LargeUsageView(entry: providerEntry, localization: localization)
         }
     }
 
-    private var emptyState: some View {
+    private func emptyState(localization: WidgetLocalization) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Open CodexBar")
+            Text(localization.text("Open CodexBar", "CodexBarを開く"))
                 .font(.body)
                 .fontWeight(.semibold)
-            Text("Usage data will appear once the app refreshes.")
+            Text(localization.text("Usage data will appear once the app refreshes.", "アプリが更新されると使用量が表示されます。"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -47,26 +72,28 @@ struct CodexBarUsageWidgetView: View {
 struct CodexBarHistoryWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: CodexBarWidgetEntry
+    private var localization: WidgetLocalization { WidgetLocalization.current() }
 
     var body: some View {
         let providerEntry = self.entry.snapshot.entries.first { $0.provider == self.entry.provider }
+        let localization = self.localization
         ZStack {
             Color.black.opacity(0.02)
             if let providerEntry {
-                HistoryView(entry: providerEntry, isLarge: self.family == .systemLarge)
+                HistoryView(entry: providerEntry, isLarge: self.family == .systemLarge, localization: localization)
             } else {
-                self.emptyState
+                self.emptyState(localization: localization)
             }
         }
         .containerBackground(.fill.tertiary, for: .widget)
     }
 
-    private var emptyState: some View {
+    private func emptyState(localization: WidgetLocalization) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Open CodexBar")
+            Text(localization.text("Open CodexBar", "CodexBarを開く"))
                 .font(.body)
                 .fontWeight(.semibold)
-            Text("Usage history will appear after a refresh.")
+            Text(localization.text("Usage history will appear after a refresh.", "更新後に使用履歴が表示されます。"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -76,26 +103,28 @@ struct CodexBarHistoryWidgetView: View {
 
 struct CodexBarCompactWidgetView: View {
     let entry: CodexBarCompactEntry
+    private var localization: WidgetLocalization { WidgetLocalization.current() }
 
     var body: some View {
         let providerEntry = self.entry.snapshot.entries.first { $0.provider == self.entry.provider }
+        let localization = self.localization
         ZStack {
             Color.black.opacity(0.02)
             if let providerEntry {
-                CompactMetricView(entry: providerEntry, metric: self.entry.metric)
+                CompactMetricView(entry: providerEntry, metric: self.entry.metric, localization: localization)
             } else {
-                self.emptyState
+                self.emptyState(localization: localization)
             }
         }
         .containerBackground(.fill.tertiary, for: .widget)
     }
 
-    private var emptyState: some View {
+    private func emptyState(localization: WidgetLocalization) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Open CodexBar")
+            Text(localization.text("Open CodexBar", "CodexBarを開く"))
                 .font(.body)
                 .fontWeight(.semibold)
-            Text("Usage data will appear once the app refreshes.")
+            Text(localization.text("Usage data will appear once the app refreshes.", "アプリが更新されると使用量が表示されます。"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -106,9 +135,11 @@ struct CodexBarCompactWidgetView: View {
 struct CodexBarSwitcherWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: CodexBarSwitcherEntry
+    private var localization: WidgetLocalization { WidgetLocalization.current() }
 
     var body: some View {
         let providerEntry = self.entry.snapshot.entries.first { $0.provider == self.entry.provider }
+        let localization = self.localization
         ZStack {
             Color.black.opacity(0.02)
             VStack(alignment: .leading, spacing: 10) {
@@ -117,11 +148,12 @@ struct CodexBarSwitcherWidgetView: View {
                     selected: self.entry.provider,
                     updatedAt: providerEntry?.updatedAt ?? Date(),
                     compact: self.family == .systemSmall,
-                    showsTimestamp: self.family != .systemSmall)
+                    showsTimestamp: self.family != .systemSmall,
+                    localization: localization)
                 if let providerEntry {
-                    self.content(providerEntry: providerEntry)
+                    self.content(providerEntry: providerEntry, localization: localization)
                 } else {
-                    self.emptyState
+                    self.emptyState(localization: localization)
                 }
             }
             .padding(12)
@@ -130,23 +162,26 @@ struct CodexBarSwitcherWidgetView: View {
     }
 
     @ViewBuilder
-    private func content(providerEntry: WidgetSnapshot.ProviderEntry) -> some View {
+    private func content(
+        providerEntry: WidgetSnapshot.ProviderEntry,
+        localization: WidgetLocalization) -> some View
+    {
         switch self.family {
         case .systemSmall:
-            SwitcherSmallUsageView(entry: providerEntry)
+            SwitcherSmallUsageView(entry: providerEntry, localization: localization)
         case .systemMedium:
-            SwitcherMediumUsageView(entry: providerEntry)
+            SwitcherMediumUsageView(entry: providerEntry, localization: localization)
         default:
-            SwitcherLargeUsageView(entry: providerEntry)
+            SwitcherLargeUsageView(entry: providerEntry, localization: localization)
         }
     }
 
-    private var emptyState: some View {
+    private func emptyState(localization: WidgetLocalization) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Open CodexBar")
+            Text(localization.text("Open CodexBar", "CodexBarを開く"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Text("Usage data appears after a refresh.")
+            Text(localization.text("Usage data appears after a refresh.", "更新後に使用量が表示されます。"))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -156,11 +191,12 @@ struct CodexBarSwitcherWidgetView: View {
 private struct CompactMetricView: View {
     let entry: WidgetSnapshot.ProviderEntry
     let metric: CompactMetric
+    let localization: WidgetLocalization
 
     var body: some View {
         let display = self.display
         VStack(alignment: .leading, spacing: 8) {
-            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt)
+            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt, localization: self.localization)
             VStack(alignment: .leading, spacing: 2) {
                 Text(display.value)
                     .font(.title2)
@@ -181,16 +217,20 @@ private struct CompactMetricView: View {
     private var display: (value: String, label: String, detail: String?) {
         switch self.metric {
         case .credits:
-            let value = self.entry.creditsRemaining.map(WidgetFormat.credits) ?? "—"
-            return (value, "Credits left", nil)
+            let value = self.entry.creditsRemaining.map { WidgetFormat.credits($0, language: self.localization.language) } ?? "—"
+            return (value, self.localization.text("Credits left", "残りクレジット"), nil)
         case .todayCost:
-            let value = self.entry.tokenUsage?.sessionCostUSD.map(WidgetFormat.usd) ?? "—"
-            let detail = self.entry.tokenUsage?.sessionTokens.map(WidgetFormat.tokenCount)
-            return (value, "Today cost", detail)
+            let value = self.entry.tokenUsage?.sessionCostUSD
+                .map { WidgetFormat.usd($0, language: self.localization.language) } ?? "—"
+            let detail = self.entry.tokenUsage?.sessionTokens
+                .map { WidgetFormat.tokenCount($0, language: self.localization.language) }
+            return (value, self.localization.text("Today cost", "今日のコスト"), detail)
         case .last30DaysCost:
-            let value = self.entry.tokenUsage?.last30DaysCostUSD.map(WidgetFormat.usd) ?? "—"
-            let detail = self.entry.tokenUsage?.last30DaysTokens.map(WidgetFormat.tokenCount)
-            return (value, "30d cost", detail)
+            let value = self.entry.tokenUsage?.last30DaysCostUSD
+                .map { WidgetFormat.usd($0, language: self.localization.language) } ?? "—"
+            let detail = self.entry.tokenUsage?.last30DaysTokens
+                .map { WidgetFormat.tokenCount($0, language: self.localization.language) }
+            return (value, self.localization.text("30d cost", "30日間コスト"), detail)
         }
     }
 }
@@ -201,6 +241,7 @@ private struct ProviderSwitcherRow: View {
     let updatedAt: Date
     let compact: Bool
     let showsTimestamp: Bool
+    let localization: WidgetLocalization
 
     var body: some View {
         HStack(spacing: self.compact ? 4 : 6) {
@@ -208,11 +249,12 @@ private struct ProviderSwitcherRow: View {
                 ProviderSwitchChip(
                     provider: provider,
                     selected: provider == self.selected,
-                    compact: self.compact)
+                    compact: self.compact,
+                    localization: self.localization)
             }
             if self.showsTimestamp {
                 Spacer(minLength: 6)
-                Text(WidgetFormat.relativeDate(self.updatedAt))
+                Text(WidgetFormat.relativeDate(self.updatedAt, language: self.localization.language))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -224,6 +266,7 @@ private struct ProviderSwitchChip: View {
     let provider: UsageProvider
     let selected: Bool
     let compact: Bool
+    let localization: WidgetLocalization
 
     var body: some View {
         let label = self.compact ? self.shortLabel : self.longLabel
@@ -252,220 +295,299 @@ private struct ProviderSwitchChip: View {
     }
 
     private var longLabel: String {
-        ProviderDefaults.metadata[self.provider]?.displayName ?? self.provider.rawValue.capitalized
+        self.localization.external.providerName(self.provider)
     }
 
     private var shortLabel: String {
-        switch self.provider {
-        case .codex: "Codex"
-        case .claude: "Claude"
-        case .gemini: "Gemini"
-        case .antigravity: "Anti"
-        case .cursor: "Cursor"
-        case .zai: "z.ai"
-        case .factory: "Droid"
-        }
+        self.localization.external.providerShortName(self.provider)
     }
 }
 
 private struct SwitcherSmallUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
+    let localization: WidgetLocalization
 
     var body: some View {
+        let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 8) {
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.sessionLabel ?? "Session",
+                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.weeklyLabel ?? "Weekly",
+                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             if let codeReview = entry.codeReviewRemainingPercent {
                 UsageBarRow(
-                    title: "Code review",
+                    title: self.localization.text("Code review", "コードレビュー"),
                     percentLeft: codeReview,
-                    color: WidgetColors.color(for: self.entry.provider))
+                    color: WidgetColors.color(for: self.entry.provider),
+                    localization: self.localization)
             }
         }
+    }
+
+    private func localizedLabel(_ value: String?, fallback: String) -> String {
+        guard let value else { return fallback }
+        return self.localization.external.localizedProviderLabel(value)
     }
 }
 
 private struct SwitcherMediumUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
+    let localization: WidgetLocalization
 
     var body: some View {
+        let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 10) {
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.sessionLabel ?? "Session",
+                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.weeklyLabel ?? "Weekly",
+                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             if let credits = entry.creditsRemaining {
-                ValueLine(title: "Credits", value: WidgetFormat.credits(credits))
+                ValueLine(
+                    title: self.localization.text("Credits", "クレジット"),
+                    value: WidgetFormat.credits(credits, language: self.localization.language))
             }
             if let token = entry.tokenUsage {
                 ValueLine(
-                    title: "Today",
-                    value: WidgetFormat.costAndTokens(cost: token.sessionCostUSD, tokens: token.sessionTokens))
+                    title: self.localization.text("Today", "今日"),
+                    value: WidgetFormat.costAndTokens(
+                        cost: token.sessionCostUSD,
+                        tokens: token.sessionTokens,
+                        language: self.localization.language))
             }
         }
+    }
+
+    private func localizedLabel(_ value: String?, fallback: String) -> String {
+        guard let value else { return fallback }
+        return self.localization.external.localizedProviderLabel(value)
     }
 }
 
 private struct SwitcherLargeUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
+    let localization: WidgetLocalization
 
     var body: some View {
+        let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 12) {
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.sessionLabel ?? "Session",
+                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.weeklyLabel ?? "Weekly",
+                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             if let codeReview = entry.codeReviewRemainingPercent {
                 UsageBarRow(
-                    title: "Code review",
+                    title: self.localization.text("Code review", "コードレビュー"),
                     percentLeft: codeReview,
-                    color: WidgetColors.color(for: self.entry.provider))
+                    color: WidgetColors.color(for: self.entry.provider),
+                    localization: self.localization)
             }
             if let credits = entry.creditsRemaining {
-                ValueLine(title: "Credits", value: WidgetFormat.credits(credits))
+                ValueLine(
+                    title: self.localization.text("Credits", "クレジット"),
+                    value: WidgetFormat.credits(credits, language: self.localization.language))
             }
             if let token = entry.tokenUsage {
                 VStack(alignment: .leading, spacing: 4) {
                     ValueLine(
-                        title: "Today",
-                        value: WidgetFormat.costAndTokens(cost: token.sessionCostUSD, tokens: token.sessionTokens))
+                        title: self.localization.text("Today", "今日"),
+                        value: WidgetFormat.costAndTokens(
+                            cost: token.sessionCostUSD,
+                            tokens: token.sessionTokens,
+                            language: self.localization.language))
                     ValueLine(
-                        title: "30d",
+                        title: self.localization.text("30d", "30日間"),
                         value: WidgetFormat.costAndTokens(
                             cost: token.last30DaysCostUSD,
-                            tokens: token.last30DaysTokens))
+                            tokens: token.last30DaysTokens,
+                            language: self.localization.language))
                 }
             }
             UsageHistoryChart(points: self.entry.dailyUsage, color: WidgetColors.color(for: self.entry.provider))
                 .frame(height: 50)
         }
+    }
+
+    private func localizedLabel(_ value: String?, fallback: String) -> String {
+        guard let value else { return fallback }
+        return self.localization.external.localizedProviderLabel(value)
     }
 }
 
 private struct SmallUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
+    let localization: WidgetLocalization
 
     var body: some View {
+        let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 8) {
-            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt)
+            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt, localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.sessionLabel ?? "Session",
+                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.weeklyLabel ?? "Weekly",
+                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             if let codeReview = entry.codeReviewRemainingPercent {
                 UsageBarRow(
-                    title: "Code review",
+                    title: self.localization.text("Code review", "コードレビュー"),
                     percentLeft: codeReview,
-                    color: WidgetColors.color(for: self.entry.provider))
+                    color: WidgetColors.color(for: self.entry.provider),
+                    localization: self.localization)
             }
         }
         .padding(12)
+    }
+
+    private func localizedLabel(_ value: String?, fallback: String) -> String {
+        guard let value else { return fallback }
+        return self.localization.external.localizedProviderLabel(value)
     }
 }
 
 private struct MediumUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
+    let localization: WidgetLocalization
 
     var body: some View {
+        let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 10) {
-            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt)
+            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt, localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.sessionLabel ?? "Session",
+                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.weeklyLabel ?? "Weekly",
+                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             if let credits = entry.creditsRemaining {
-                ValueLine(title: "Credits", value: WidgetFormat.credits(credits))
+                ValueLine(
+                    title: self.localization.text("Credits", "クレジット"),
+                    value: WidgetFormat.credits(credits, language: self.localization.language))
             }
             if let token = entry.tokenUsage {
                 ValueLine(
-                    title: "Today",
-                    value: WidgetFormat.costAndTokens(cost: token.sessionCostUSD, tokens: token.sessionTokens))
+                    title: self.localization.text("Today", "今日"),
+                    value: WidgetFormat.costAndTokens(
+                        cost: token.sessionCostUSD,
+                        tokens: token.sessionTokens,
+                        language: self.localization.language))
             }
         }
         .padding(12)
+    }
+
+    private func localizedLabel(_ value: String?, fallback: String) -> String {
+        guard let value else { return fallback }
+        return self.localization.external.localizedProviderLabel(value)
     }
 }
 
 private struct LargeUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
+    let localization: WidgetLocalization
 
     var body: some View {
+        let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 12) {
-            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt)
+            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt, localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.sessionLabel ?? "Session",
+                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             UsageBarRow(
-                title: ProviderDefaults.metadata[self.entry.provider]?.weeklyLabel ?? "Weekly",
+                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
-                color: WidgetColors.color(for: self.entry.provider))
+                color: WidgetColors.color(for: self.entry.provider),
+                localization: self.localization)
             if let codeReview = entry.codeReviewRemainingPercent {
                 UsageBarRow(
-                    title: "Code review",
+                    title: self.localization.text("Code review", "コードレビュー"),
                     percentLeft: codeReview,
-                    color: WidgetColors.color(for: self.entry.provider))
+                    color: WidgetColors.color(for: self.entry.provider),
+                    localization: self.localization)
             }
             if let credits = entry.creditsRemaining {
-                ValueLine(title: "Credits", value: WidgetFormat.credits(credits))
+                ValueLine(
+                    title: self.localization.text("Credits", "クレジット"),
+                    value: WidgetFormat.credits(credits, language: self.localization.language))
             }
             if let token = entry.tokenUsage {
                 VStack(alignment: .leading, spacing: 4) {
                     ValueLine(
-                        title: "Today",
-                        value: WidgetFormat.costAndTokens(cost: token.sessionCostUSD, tokens: token.sessionTokens))
+                        title: self.localization.text("Today", "今日"),
+                        value: WidgetFormat.costAndTokens(
+                            cost: token.sessionCostUSD,
+                            tokens: token.sessionTokens,
+                            language: self.localization.language))
                     ValueLine(
-                        title: "30d",
+                        title: self.localization.text("30d", "30日間"),
                         value: WidgetFormat.costAndTokens(
                             cost: token.last30DaysCostUSD,
-                            tokens: token.last30DaysTokens))
+                            tokens: token.last30DaysTokens,
+                            language: self.localization.language))
                 }
             }
             UsageHistoryChart(points: self.entry.dailyUsage, color: WidgetColors.color(for: self.entry.provider))
                 .frame(height: 50)
         }
         .padding(12)
+    }
+
+    private func localizedLabel(_ value: String?, fallback: String) -> String {
+        guard let value else { return fallback }
+        return self.localization.external.localizedProviderLabel(value)
     }
 }
 
 private struct HistoryView: View {
     let entry: WidgetSnapshot.ProviderEntry
     let isLarge: Bool
+    let localization: WidgetLocalization
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt)
+            HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt, localization: self.localization)
             UsageHistoryChart(points: self.entry.dailyUsage, color: WidgetColors.color(for: self.entry.provider))
                 .frame(height: self.isLarge ? 90 : 60)
             if let token = entry.tokenUsage {
                 ValueLine(
-                    title: "Today",
-                    value: WidgetFormat.costAndTokens(cost: token.sessionCostUSD, tokens: token.sessionTokens))
+                    title: self.localization.text("Today", "今日"),
+                    value: WidgetFormat.costAndTokens(
+                        cost: token.sessionCostUSD,
+                        tokens: token.sessionTokens,
+                        language: self.localization.language))
                 ValueLine(
-                    title: "30d",
-                    value: WidgetFormat.costAndTokens(cost: token.last30DaysCostUSD, tokens: token.last30DaysTokens))
+                    title: self.localization.text("30d", "30日間"),
+                    value: WidgetFormat.costAndTokens(
+                        cost: token.last30DaysCostUSD,
+                        tokens: token.last30DaysTokens,
+                        language: self.localization.language))
             }
         }
         .padding(12)
@@ -475,14 +597,15 @@ private struct HistoryView: View {
 private struct HeaderView: View {
     let provider: UsageProvider
     let updatedAt: Date
+    let localization: WidgetLocalization
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(ProviderDefaults.metadata[self.provider]?.displayName ?? self.provider.rawValue.capitalized)
+            Text(self.localization.external.providerName(self.provider))
                 .font(.body)
                 .fontWeight(.semibold)
             Spacer()
-            Text(WidgetFormat.relativeDate(self.updatedAt))
+            Text(WidgetFormat.relativeDate(self.updatedAt, language: self.localization.language))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -493,6 +616,7 @@ private struct UsageBarRow: View {
     let title: String
     let percentLeft: Double?
     let color: Color
+    let localization: WidgetLocalization
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -500,7 +624,7 @@ private struct UsageBarRow: View {
                 Text(self.title)
                     .font(.caption)
                 Spacer()
-                Text(WidgetFormat.percent(self.percentLeft))
+                Text(WidgetFormat.percent(self.percentLeft, language: self.localization.language))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -577,29 +701,31 @@ enum WidgetColors {
 }
 
 enum WidgetFormat {
-    static func percent(_ value: Double?) -> String {
+    static func percent(_ value: Double?, language: AppLanguage) -> String {
         guard let value else { return "—" }
         return String(format: "%.0f%%", value)
     }
 
-    static func credits(_ value: Double) -> String {
+    static func credits(_ value: Double, language: AppLanguage) -> String {
         let formatter = NumberFormatter()
+        formatter.locale = language.locale
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 0
         return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
     }
 
-    static func costAndTokens(cost: Double?, tokens: Int?) -> String {
-        let costText = cost.map(self.usd) ?? "—"
+    static func costAndTokens(cost: Double?, tokens: Int?, language: AppLanguage) -> String {
+        let costText = cost.map { self.usd($0, language: language) } ?? "—"
         if let tokens {
-            return "\(costText) · \(self.tokenCount(tokens))"
+            return "\(costText) · \(self.tokenCount(tokens, language: language))"
         }
         return costText
     }
 
-    static func usd(_ value: Double) -> String {
+    static func usd(_ value: Double, language: AppLanguage) -> String {
         let formatter = NumberFormatter()
+        formatter.locale = language.locale
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
         formatter.maximumFractionDigits = 2
@@ -607,17 +733,20 @@ enum WidgetFormat {
         return formatter.string(from: NSNumber(value: value)) ?? String(format: "$%.2f", value)
     }
 
-    static func tokenCount(_ value: Int) -> String {
+    static func tokenCount(_ value: Int, language: AppLanguage) -> String {
         let formatter = NumberFormatter()
+        formatter.locale = language.locale
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
         let raw = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
-        return "\(raw) tokens"
+        let suffix = AppLocalization(language: language).choose("tokens", "トークン")
+        return "\(raw) \(suffix)"
     }
 
-    static func relativeDate(_ date: Date) -> String {
+    static func relativeDate(_ date: Date, language: AppLanguage) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .short
+        formatter.locale = language.locale
         return formatter.localizedString(for: date, relativeTo: Date())
     }
 }

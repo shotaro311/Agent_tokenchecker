@@ -1,28 +1,28 @@
 ---
-summary: "Menu bar UI, icon rendering, and menu layout details."
+summary: "メニューバーUI、アイコン描画、メニュー構成の詳細。"
 read_when:
-  - Changing menu layout, icon rendering, or UI copy
-  - Updating menu card or provider-specific UI
+  - メニュー構成/アイコン描画/UI文言を変更するとき
+  - メニューカードやプロバイダ固有UIを更新するとき
 ---
 
-# UI & icon
+# UI & アイコン
 
-## Menu bar
-- LSUIElement app: no Dock icon; status item uses custom NSImage.
-- Merge Icons toggle combines providers into one status item with a switcher.
+## メニューバー
+- LSUIElementアプリ: Dockアイコンなし。ステータス項目はカスタムNSImageを使用。
+- 「アイコンを統合」トグルで、1つのステータス項目に統合しスイッチャーで切替。
 
-## Icon rendering
-- 20×18 template image.
-- Top bar = 5-hour window; bottom hairline = weekly window.
-- Fill represents percent remaining by default; “Show usage as used” flips to percent used.
-- Dimmed when last refresh failed; status overlays render incident indicators.
+## アイコン描画
+- 20×18のテンプレート画像。
+- 上バー = 5時間ウィンドウ、下の細線 = 週間ウィンドウ。
+- 既定は「残量%」を表示。「使用量を使用済みとして表示」で「使用済み%」に切替。
+- 更新失敗時は暗く表示。ステータスの指標オーバーレイを描画。
 
-## Menu card
-- Session + weekly rows with resets (relative countdown when available).
-- Codex-only: Credits + “Buy Credits…” in-card action.
-- Web-only rows (when OpenAI web enabled): code review remaining, usage breakdown submenu.
+## メニューカード
+- セッション + 週間の行とリセット表示（可能な場合は相対カウントダウン）。
+- Codexのみ: クレジット + 「クレジットを購入…」アクション。
+- Web限定の行（OpenAI Web有効時）: コードレビュー残量、使用量内訳サブメニュー。
 
-## Widgets (high level)
-- Widget entries mirror the menu card; detailed pipeline in `docs/widgets.md`.
+## ウィジェット（概要）
+- ウィジェットの表示はメニューカードに対応。詳細なパイプラインは `docs/widgets.md`。
 
-See also: `docs/widgets.md`.
+関連: `docs/widgets.md`。

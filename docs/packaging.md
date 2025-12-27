@@ -1,23 +1,23 @@
 ---
-summary: "Packaging, signing, and bundled CLI notes."
+summary: "パッケージング、署名、同梱CLIのメモ。"
 read_when:
-  - Packaging/signing builds
-  - Updating bundle layout or CLI bundling
+  - ビルドのパッケージング/署名を行うとき
+  - バンドル構成やCLI同梱方式を更新するとき
 ---
 
-# Packaging & signing
+# パッケージング & 署名
 
-## Scripts
-- `Scripts/package_app.sh`: builds arm64, writes `CodexBar.app`, seeds Sparkle keys/feed.
-- `Scripts/sign-and-notarize.sh`: signs, notarizes, staples, zips.
-- `Scripts/make_appcast.sh`: generates Sparkle appcast and embeds HTML release notes.
-- `Scripts/changelog-to-html.sh`: converts the per-version changelog section to HTML for Sparkle.
+## スクリプト
+- `Scripts/package_app.sh`: arm64ビルド、`CodexBar.app` 出力、Sparkleのキー/フィードを埋め込み。
+- `Scripts/sign-and-notarize.sh`: 署名、ノータライズ、ステープル、zip作成。
+- `Scripts/make_appcast.sh`: Sparkleのappcast生成とHTMLリリースノート埋め込み。
+- `Scripts/changelog-to-html.sh`: バージョン別の変更履歴をSparkle用HTMLに変換。
 
-## Bundle contents
-- `CodexBarWidget.appex` bundled with app-group entitlements.
-- `CodexBarCLI` copied to `CodexBar.app/Contents/Helpers/` for symlinking.
+## バンドル内容
+- `CodexBarWidget.appex`（アプリグループのエンタイトルメント付き）を同梱。
+- `CodexBarCLI` を `CodexBar.app/Contents/Helpers/` にコピーし、シンボリックリンクに使用。
 
-## Releases
-- Full checklist in `docs/RELEASING.md`.
+## リリース
+- 完全なチェックリストは `docs/RELEASING.md` を参照。
 
-See also: `docs/sparkle.md`.
+関連: `docs/sparkle.md`。

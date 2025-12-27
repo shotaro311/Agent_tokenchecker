@@ -1,28 +1,28 @@
 ---
-summary: "Sparkle integration details for CodexBar: updater config, keys, and release flow."
+summary: "CodexBarのSparkle連携：アップデータ設定、キー、リリースフロー。"
 read_when:
-  - Touching Sparkle settings, feed URL, or keys
-  - Generating or troubleshooting the Sparkle appcast
-  - Validating update toggles or updater UI
+  - Sparkle設定/フィードURL/キーを変更するとき
+  - Sparkle appcastを生成/調査するとき
+  - 更新トグルやアップデータUIを検証するとき
 ---
 
-# Sparkle integration
+# Sparkle連携
 
-- Framework: Sparkle 2.8.1 via SwiftPM.
-- Updater: `SPUStandardUpdaterController` owned by `AppDelegate` (see `Sources/CodexBar/CodexbarApp.swift:1`).
-- Feed: `SUFeedURL` in Info.plist points to GitHub Releases appcast (`appcast.xml`).
-- Key: `SUPublicEDKey` set to `AGCY8w5vHirVfGGDGc8Szc5iuOqupZSh9pMj/Qs67XI=`. Keep the Ed25519 private key safe; use it when generating the appcast.
-- UI: auto-check toggle (About) enables auto-downloads; menu only shows “Update ready, restart now?” once an update is downloaded.
-- LSUIElement: works; updater window will show when checking. App is non-sandboxed.
+- フレームワーク: Sparkle 2.8.1（SwiftPM）。
+- アップデータ: `SPUStandardUpdaterController` を `AppDelegate` が保持（`Sources/CodexBar/CodexbarApp.swift:1`）。
+- フィード: Info.plist の `SUFeedURL` は GitHub Releases のappcast（`appcast.xml`）を指す。
+- キー: `SUPublicEDKey` は `AGCY8w5vHirVfGGDGc8Szc5iuOqupZSh9pMj/Qs67XI=`。Ed25519秘密鍵は厳重に保管し、appcast生成時に使用する。
+- UI: 自動チェックトグル（About）で自動ダウンロードを有効化。更新がダウンロードされた時だけメニューに「更新の準備ができました。今すぐ再起動？」を表示。
+- LSUIElement: 使える。チェック時にアップデータウィンドウが表示される。アプリは非サンドボックス。
 
-## Release flow
-1) Build & notarize as usual (`./Scripts/sign-and-notarize.sh`), producing notarized `CodexBar-<ver>.zip`.
-2) Generate appcast entry with Sparkle `generate_appcast` using the Ed25519 private key; HTML release notes come from `CHANGELOG.md` via `Scripts/changelog-to-html.sh`.
-3) Upload `appcast.xml` + zip to GitHub Releases (feed URL stays stable).
-4) Tag/release.
+## リリースフロー
+1) 通常通りビルド/ノータライズ（`./Scripts/sign-and-notarize.sh`）し、ノータライズ済み `CodexBar-<ver>.zip` を作成。
+2) Ed25519秘密鍵で Sparkle の `generate_appcast` を使いappcastを生成。HTMLリリースノートは `CHANGELOG.md` を `Scripts/changelog-to-html.sh` で変換。
+3) `appcast.xml` と zip を GitHub Releases にアップロード（フィードURLは固定）。
+4) タグ/リリース。
 
-## Notes
-- HTML release notes are embedded in the appcast entry; the Sparkle update dialog should show formatted bullets (not raw tags).
-- If you change the feed host or key, update Info.plist (`SUFeedURL`, `SUPublicEDKey`) and bump the app.
-- Auto-check toggle is persisted via Sparkle; manual “Check for Updates…” remains in About.
-- CodexBar disables Sparkle in Homebrew and unsigned builds; those installs should be updated via `brew` or reinstalling from Releases.
+## 注意点
+- HTMLリリースノートはappcastエントリに埋め込まれるため、Sparkleの更新ダイアログは整形済みの箇条書きを表示します（生のタグではない）。
+- フィードホストやキーを変更した場合は Info.plist（`SUFeedURL`, `SUPublicEDKey`）を更新し、アプリのバージョンを上げる。
+- 自動チェックトグルはSparkleが永続化します。手動の「更新を確認…」はAboutに残る。
+- CodexBarはHomebrew版と未署名ビルドではSparkleを無効化します。これらは `brew` かReleasesからの再インストールで更新してください。

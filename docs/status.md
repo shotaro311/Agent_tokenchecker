@@ -1,28 +1,28 @@
 ---
-summary: "Provider status checks, sources, and indicator mapping."
+summary: "プロバイダのステータス確認、ソース、指標の対応表。"
 read_when:
-  - Changing status sources or status UI
-  - Debugging status polling or incident parsing
+  - ステータスソースやUIを変更するとき
+  - ステータスポーリングやインシデント解析をデバッグするとき
 ---
 
-# Status checks
+# ステータスチェック
 
-## Sources
-- OpenAI + Claude + Cursor: Statuspage.io `api/v2/status.json`.
-- Gemini + Antigravity: Google Workspace incidents feed for the Gemini product.
+## ソース
+- OpenAI + Claude + Cursor: Statuspage.io の `api/v2/status.json`。
+- Gemini + Antigravity: Gemini製品のGoogle Workspaceインシデントフィード。
 
-## Behavior
-- Toggle: Settings → Advanced → “Check provider status”.
-- `UsageStore` polls status and stores `ProviderStatus` for indicator/description.
-- Menu shows incident summary + freshness; icon overlays indicator.
+## 挙動
+- トグル: 設定 → 高度な設定 → 「プロバイダのステータスを確認」。
+- `UsageStore` がステータスをポーリングし、指標/説明用に `ProviderStatus` を保存。
+- メニューにインシデント概要 + 新鮮度を表示し、アイコンに指標オーバーレイを表示します。
 
-## Workspace incidents
-- Feed: `https://www.google.com/appsstatus/dashboard/incidents.json`.
-- Uses the Gemini product ID from provider metadata.
-- Chooses the most severe active incident for the provider.
+## Workspaceインシデント
+- フィード: `https://www.google.com/appsstatus/dashboard/incidents.json`。
+- プロバイダメタデータのGemini製品IDを使用。
+- 該当プロバイダの最も深刻なアクティブインシデントを選択。
 
-## Links
-- If `statusPageURL` is set, status polling uses it and the menu action opens it.
-- If only `statusLinkURL` exists, the menu action opens it without polling.
+## リンク
+- `statusPageURL` があればポーリングとメニューアクションの両方に使用。
+- `statusLinkURL` のみある場合はポーリングせず、メニューアクションでリンクを開くだけ。
 
-See also: `docs/providers.md`.
+関連: `docs/providers.md`。

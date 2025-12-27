@@ -20,34 +20,37 @@ struct UsageBreakdownChartMenuView: View {
 
     private let breakdown: [OpenAIDashboardDailyBreakdown]
     private let width: CGFloat
+    private let language: AppLanguage
     @State private var selectedDayKey: String?
 
-    init(breakdown: [OpenAIDashboardDailyBreakdown], width: CGFloat) {
+    init(breakdown: [OpenAIDashboardDailyBreakdown], width: CGFloat, language: AppLanguage) {
         self.breakdown = breakdown
         self.width = width
+        self.language = language
     }
 
     var body: some View {
+        let l10n = AppLocalization(language: self.language)
         let model = Self.makeModel(from: self.breakdown)
         VStack(alignment: .leading, spacing: 10) {
             if model.points.isEmpty {
-                Text("No usage breakdown data.")
+                Text(l10n.choose("No usage breakdown data.", "使用量の内訳データがありません。"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
                 Chart {
                     ForEach(model.points) { point in
                         BarMark(
-                            x: .value("Day", point.date, unit: .day),
-                            y: .value("Credits used", point.creditsUsed))
-                            .foregroundStyle(by: .value("Service", point.service))
+                            x: .value(l10n.choose("Day", "日付"), point.date, unit: .day),
+                            y: .value(l10n.choose("Credits used", "使用クレジット"), point.creditsUsed))
+                            .foregroundStyle(by: .value(l10n.choose("Service", "サービス"), point.service))
                     }
                     if let peak = model.peakPoint {
                         let capStart = max(peak.creditsUsed - Self.capHeight(maxValue: model.maxCreditsUsed), 0)
                         BarMark(
-                            x: .value("Day", peak.date, unit: .day),
-                            yStart: .value("Cap start", capStart),
-                            yEnd: .value("Cap end", peak.creditsUsed))
+                            x: .value(l10n.choose("Day", "日付"), peak.date, unit: .day),
+                            yStart: .value(l10n.choose("Cap start", "上限開始"), capStart),
+                            yEnd: .value(l10n.choose("Cap end", "上限終了"), peak.creditsUsed))
                             .foregroundStyle(Color(nsColor: .systemYellow))
                     }
                 }
@@ -57,7 +60,7 @@ struct UsageBreakdownChartMenuView: View {
                     AxisMarks(values: model.axisDates) { _ in
                         AxisGridLine().foregroundStyle(Color.clear)
                         AxisTick().foregroundStyle(Color.clear)
-                        AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                        AxisValueLabel(format: .dateTime.month(.abbreviated).day().locale(self.language.locale))
                             .font(.caption2)
                             .foregroundStyle(Color(nsColor: .tertiaryLabelColor))
                     }
@@ -340,20 +343,21 @@ struct UsageBreakdownChartMenuView: View {
     }
 
     private func detailLines(model: Model) -> (primary: String, secondary: String?) {
+        let l10n = AppLocalization(language: self.language)
         guard let key = self.selectedDayKey,
               let day = model.breakdownByDayKey[key],
               let date = Self.dateFromDayKey(key)
         else {
-            return ("Hover a bar for details", nil)
+            return (l10n.choose("Hover a bar for details", "バーにカーソルを合わせると詳細が表示されます"), nil)
         }
 
-        let dayLabel = date.formatted(.dateTime.month(.abbreviated).day())
-        let total = day.totalCreditsUsed.formatted(.number.precision(.fractionLength(0...2)))
+        let dayLabel = date.formatted(.dateTime.month(.abbreviated).day().locale(self.language.locale))
+        let total = self.creditsValueText(day.totalCreditsUsed)
         if day.services.isEmpty {
             return ("\(dayLabel): \(total)", nil)
         }
         if day.services.count <= 1, let first = day.services.first {
-            let used = first.creditsUsed.formatted(.number.precision(.fractionLength(0...2)))
+            let used = self.creditsValueText(first.creditsUsed)
             return ("\(dayLabel): \(used)", first.service)
         }
 
@@ -363,9 +367,18 @@ struct UsageBreakdownChartMenuView: View {
                 return lhs.creditsUsed > rhs.creditsUsed
             }
             .prefix(3)
-            .map { "\($0.service) \($0.creditsUsed.formatted(.number.precision(.fractionLength(0...2))))" }
+            .map { "\($0.service) \(self.creditsValueText($0.creditsUsed))" }
             .joined(separator: " · ")
 
         return ("\(dayLabel): \(total)", services)
+    }
+
+    private func creditsValueText(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+        formatter.locale = self.language.locale
+        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
     }
 }

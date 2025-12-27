@@ -1,266 +1,264 @@
-# Changelog
+# 変更履歴
 
-## 0.15.0 — Unreleased
-- Droid (Factory): new provider with Standard + Premium usage via browser cookies, plus dashboard + status links. Thanks @shashank-factory!
-- Menu: allow multi-line error messages in the provider subtitle (up to 4 lines).
-- Menu: fix subtitle sizing for multi-line error states.
-- Menu: avoid clipping on multi-line error subtitles.
-- Menu: widen the menu card when 7+ providers are enabled.
-- Providers: Codex, Claude Code, Cursor, Gemini, Antigravity, z.ai.
-- Codex: OpenAI web dashboard is now the primary source for usage + credits; CLI fallback only when no matching cookies exist.
-- Claude: prefer claude.ai web API via cookies with CLI fallback when no session cookies are found; OAuth is debug-only.
-- CLI: replace `--web`/`--claude-source` with `--source` (auto/web/cli/oauth); auto falls back only when cookies are missing.
-- Cursor: add new usage provider with browser cookie auth (cursor.com + cursor.sh), on-demand bar support, and dashboard access.
-- Cursor: keep stored sessions on transient failures; clear only on invalid auth.
-- z.ai: new provider support with Tokens + MCP usage bars and MCP details submenu; API token now lives in Preferences (stored in Keychain); usage bars respect the show-used toggle. Thanks @uwe-schwarz for the initial work!
-- Preferences: fix Advanced Display checkboxes and move the Quit button to the bottom of General.
-- Preferences: hide “Augment Claude via web” unless Claude usage source is CLI; rename the cost toggle to “Show cost summary”.
-- Preferences: add an Advanced toggle to show/hide optional Codex Credits + Claude Extra usage sections (on by default).
-- Widgets: add a new “CodexBar Switcher” widget that lets you switch providers and remember the selection.
-- Menu: provider switcher now uses crisp brand icons with equal-width segments and a per-provider weekly remaining indicator.
-- Menu: tighten provider switcher sizing and increase spacing between label and weekly indicator bar.
-- Menu: provider switcher no longer forces a wider menu when many providers are enabled; segments clamp to the menu width.
-- Menu: provider switcher now aligns to the same horizontal padding grid as the menu cards when space allows.
-- Dev: `compile_and_run.sh` now force-kills old instances to avoid launching duplicates.
-- Dev: `compile_and_run.sh` now waits for slow launches (polling for the process).
-- CI: build/test Linux `CodexBarCLI` (x86_64 + aarch64) and publish release assets as `CodexBarCLI-<tag>-linux-<arch>.tar.gz` (+ `.sha256`).
-- CLI: add alias fallback for Codex/Claude detection when PATH lookups fail.
-- Providers: support Arc browser cookies for Factory/Droid (and other Chromium-based cookie imports).
-- Providers: accept Auth.js secure session cookies for Factory/Droid login detection.
-- Providers: accept Factory auth session cookies (session/access-token) for Droid.
-- Droid: surface Factory API errors instead of masking them as missing sessions.
-- Droid: retry auth without access-token cookies when Factory flags a stale token.
-- Droid: try all detected browser profiles before giving up.
-- Droid: fall back to auth.factory.ai endpoints when cookies live on the auth host.
-- Droid: use WorkOS refresh tokens from browser local storage when cookies fail.
-- Providers: hide z.ai in the menu until an API key is set.
-- Menu: refresh runs automatically when opening the menu with a short retry (refresh row removed).
-- Menu: hide the Status Page row when a provider has no status URL.
-- Menu: align switcher bar with the “show usage as used” toggle.
-- Antigravity: fix lsof port filtering by ANDing listen + pid conditions. Thanks @shaw-baobao!
-- Claude: default to Claude Code OAuth usage API (credentials from Keychain or `~/.claude/.credentials.json`), with Debug selector + `--claude-source` CLI override (OAuth/Web/CLI).
-- OpenAI web: allow importing any signed-in browser session when Codex email is unknown (first-run friendly).
-- Core: Linux CLI builds now compile (mac-only WebKit/logging gated; FoundationNetworking imports where needed).
-- Core: fix CI flake for Claude trust prompts by making PTY writes fully reliable.
-- Core: Cursor provider is macOS-only (Linux CLI builds stub it).
-- Core: make `RateWindow` equatable (used by OpenAI dashboard snapshots and tests).
-- Tests: cover alias fallback resolution for Codex/Claude and add Linux platform gating coverage (run in CI).
-- Tests: cover hiding Codex Credits + Claude Extra usage via the Advanced toggle.
-- Docs: expand CLI docs for Linux install + flags.
+## 0.15.0 — 未リリース
+- Droid（Factory）: ブラウザCookieでStandard/Premium使用量を取得する新プロバイダを追加。ダッシュボード/ステータスリンクも追加。Thanks @shashank-factory!
+- メニュー: プロバイダ副題に複数行エラー（最大4行）を許可。
+- メニュー: 複数行エラー時の副題サイズを修正。
+- メニュー: 複数行エラー副題のクリップを回避。
+- メニュー: 7プロバイダ以上有効時にメニューカード幅を拡大。
+- プロバイダ: Codex / Claude Code / Cursor / Gemini / Antigravity / z.ai。
+- Codex: OpenAI Webダッシュボードを使用量+クレジットの主ソースに変更。対応Cookieがない場合のみCLIフォールバック。
+- Claude: Cookieによるclaude.ai Web APIを優先し、Cookieがない場合のみCLIフォールバック。OAuthはデバッグ専用。
+- CLI: `--web`/`--claude-source` を `--source`（auto/web/cli/oauth）に置換。autoはCookieがない場合のみフォールバック。
+- Cursor: ブラウザCookie認証（cursor.com + cursor.sh）の新しい使用量プロバイダ、オンデマンドバー対応、ダッシュボードアクセスを追加。
+- Cursor: 一時的な失敗では保存セッションを保持し、認証無効時のみクリア。
+- z.ai: トークン+MCPの使用量バーとMCP詳細サブメニューを追加。APIトークンは設定に移動（Keychain保存）。使用量バーは「使用済み表示」トグルに対応。Thanks @uwe-schwarz!
+- 設定: 高度な表示チェックボックスを修正し、終了ボタンを一般タブ下部へ移動。
+- 設定: ClaudeソースがCLIのときのみ「WebでClaudeを補完」を表示。コストトグル名を「コスト概要を表示」に変更。
+- 設定: Codexクレジット + Claude Extra使用量セクションの表示/非表示トグルを高度な設定に追加（既定オン）。
+- ウィジェット: プロバイダ切替と選択記憶ができる「CodexBar Switcher」を追加。
+- メニュー: スイッチャーを鮮明なブランドアイコンに変更し、等幅セグメント + 週残量インジケータを追加。
+- メニュー: スイッチャーのサイズを引き締め、ラベルと週インジケータの間隔を拡大。
+- メニュー: 多数プロバイダ時もメニュー幅を強制拡張せず、セグメントをメニュー幅にクランプ。
+- メニュー: 余裕がある場合、スイッチャーの横パディングをメニューカードと揃える。
+- Dev: `compile_and_run.sh` が旧インスタンスを強制終了して重複起動を回避。
+- Dev: `compile_and_run.sh` が遅い起動を待機（プロセスをポーリング）。
+- CI: Linux向けCodexBarCLI（x86_64 + aarch64）をビルド/テストし、`CodexBarCLI-<tag>-linux-<arch>.tar.gz`（+`.sha256`）を公開。
+- CLI: PATH解決失敗時にCodex/Claude検出のエイリアスフォールバックを追加。
+- プロバイダ: Factory/Droid向けにArcブラウザCookie取り込みをサポート（他のChromium系にも適用）。
+- プロバイダ: Factory/Droidログイン検出でAuth.jsのsecure session Cookieを許容。
+- プロバイダ: Droid向けにFactoryのauthセッションCookie（session/access-token）を許容。
+- Droid: Factory APIエラーをセッション欠如として隠さず表示。
+- Droid: Factoryが古いトークンを示した場合、access-token Cookieなしで再認証。
+- Droid: 検出した全ブラウザプロファイルを試す。
+- Droid: Cookieがauthホストにある場合、auth.factory.aiエンドポイントへフォールバック。
+- Droid: Cookie失敗時にローカルストレージのWorkOSリフレッシュトークンを利用。
+- プロバイダ: APIキー設定までz.aiをメニューから非表示。
+- メニュー: 開くと自動更新（短いリトライ付き）。更新行は削除。
+- メニュー: ステータスURLがないプロバイダではStatus Page行を非表示。
+- メニュー: スイッチャーバーを「使用済み表示」トグルと整列。
+- Antigravity: lsofのポートフィルタをlisten+pid条件のANDで修正。Thanks @shaw-baobao!
+- Claude: Claude Code OAuth usage APIを既定に（Keychainまたは`~/.claude/.credentials.json`）。Debug選択 + `--claude-source` CLI上書き（OAuth/Web/CLI）。
+- OpenAI Web: Codexメール不明時でも任意のサインイン済みブラウザセッションを取り込み可能に（初回向け）。
+- Core: Linux CLIビルドがコンパイル可能に（macのみWebKit/ログをガードし、必要に応じてFoundationNetworkingを導入）。
+- Core: Claude信頼プロンプトのCIフレークを修正（PTY書き込みの信頼性を改善）。
+- Core: CursorプロバイダはmacOSのみ（Linux CLIはスタブ）。
+- Core: `RateWindow` をEquatableに（OpenAIダッシュボードスナップショット/テスト用）。
+- Tests: Codex/Claudeのエイリアスフォールバック解決とLinuxプラットフォームゲートをテスト。
+- Tests: 高度なトグルでCodexクレジット + Claude Extra使用量を非表示にする挙動をテスト。
+- Docs: LinuxインストールとフラグのCLIドキュメントを拡充。
 
 ## 0.14.0 — 2025-12-25
-- Antigravity: new local provider for the Antigravity language server (Claude + Gemini quotas) with an experimental toggle; improved plan display + debug output; clearer not-running/port errors; hide account switch.
-- Status: poll Google Workspace incidents for Gemini + Antigravity; Status Page opens the Workspace status page.
-- Settings: add Providers tab; move ccusage + status toggles to General; keep display controls in Advanced.
-- Menu/UI: widen the menu for four providers; cards/charts adapt to menu width; tighten provider switcher/toggle spacing; keep menus refreshed while open.
-- Gemini: hide the dashboard action when unsupported.
-- Claude: fix Extra usage spend/limit units (cents); improve CLI probe stability; surface web session info in Debug.
-- OpenAI web: fix dashboard ghost overlay on desktop (WebKit keepalive window).
-- Debug: add a debug-lldb build mode for troubleshooting.
+- Antigravity: ローカルプロバイダを追加（Claude + Geminiのクォータ）。実験トグル、プラン表示/デバッグ強化、not-running/ポートエラー明確化、アカウント切替非表示。
+- Status: Gemini + Antigravity向けにGoogle Workspaceインシデントをポーリング。Status PageはWorkspaceページを開く。
+- 設定: Providersタブを追加。ccusage + statusトグルを一般に移動。表示制御は高度な設定へ。
+- メニュー/UI: 4プロバイダ向けにメニュー幅を拡大。カード/チャートが幅に追従。スイッチャー/トグル間隔を最適化。メニュー開放中の更新を維持。
+- Gemini: 未対応時はダッシュボードアクションを非表示。
+- Claude: Extra usageの金額/上限単位（セント）を修正。CLIプローブ安定化。DebugにWebセッション情報を表示。
+- OpenAI Web: デスクトップでのダッシュボード幽霊オーバーレイを修正（WebKitキープアライブ）。
+- Debug: トラブルシュート向けのdebug-lldbビルドモードを追加。
 
 ## 0.13.0 — 2025-12-24
-- Claude: add optional web-first usage via Safari/Chrome cookies (no CLI fallback) including “Extra usage” budget bar.
-- Claude: web identity now uses `/api/account` for email + plan (via rate_limit_tier).
-- Settings: standardize “Augment … via web” copy for Codex + Claude web cookie features.
-- Debug: Claude dump now shows web strategy, cookie discovery, HTTP status codes, and parsed summary.
-- Dev: add Claude web probe CLI to enumerate endpoints/fields using browser cookies.
-- Tests: add unit coverage for Claude web API usage, overage, and account parsing.
-- Menu: custom menu items now use the native selection highlight color (plus matching selection text/track colors).
-- Charts: boost hover highlight contrast for credits/usage history bands.
-- Menu: reorder Codex blocks to show credits before cost.
-- Menu: split Claude “Extra usage” (no submenu) from “Cost” (history submenu) and trim redundant extra-usage subtext.
+- Claude: Safari/Chrome CookieによるWeb優先使用量（CLIフォールバックなし）を追加。Extra usageの予算バーも表示。
+- Claude: Webの識別情報を `/api/account` から取得（rate_limit_tier使用）。
+- 設定: Codex/Claudeの「Webで補完」文言を統一。
+- Debug: ClaudeダンプにWeb戦略、Cookie検出、HTTPステータス、解析サマリを表示。
+- Dev: ブラウザCookieを使ったClaude WebプローブCLIを追加（エンドポイント/フィールド列挙）。
+- Tests: Claude Web APIの使用量/超過/アカウント解析を追加。
+- メニュー: 選択ハイライト色をネイティブに合わせ、選択時の文字/トラック色も調整。
+- チャート: クレジット/使用履歴のホバー強調を改善。
+- メニュー: Codexブロックの順序を「クレジット → コスト」に変更。
+- メニュー: Claudeの「Extra usage」（サブメニューなし）と「Cost」（履歴サブメニュー）を分離し、冗長な補足を削減。
 
 ## 0.12.0 — 2025-12-23
-- Widgets: add WidgetKit extension backed by a shared app‑group usage snapshot.
-- New local cost usage tracking (Codex + Claude) via a lightweight scanner inspired by ccusage (MIT) — computes cost from local JSONL logs without Node CLIs. Thanks @ryoppippi!
-- Cost summary now includes last‑30‑days tokens; weekly pace indicators (with runout copy) hide when usage is fully depleted. Thanks @Remedy92!
-- Claude: PTY probes now stop after idle, auto‑clean on restart, and run under a watchdog to avoid runaway CLI processes.
-- Menu polish: group history under card sections, simplify history labels, and refresh menus live while open.
-- Performance: faster usage log scanning + cost parsing; cache menu icons and speed up OpenAI dashboard parsing.
-- Sparkle: auto-download updates when auto-check is enabled, and only show the restart menu entry once an update is ready.
-- Widgets: experimental WidgetKit extension (may require restarting the widget gallery/Dock to appear).
-- Credits: show credits as a progress bar and add a credits history chart when OpenAI web data is available.
-- Credits: move “Buy Credits…” into its own menu item and improve auto-start checkout flow.
+- ウィジェット: アプリグループの使用量スナップショットを使うWidgetKit拡張を追加。
+- 新しいローカルコスト使用量（Codex + Claude）。ccusageに着想を得た軽量スキャナでJSONLログからコストを算出（Node CLI不要）。Thanks @ryoppippi!
+- コスト概要に過去30日トークンを追加。週間ペースの実行予測は枯渇時に非表示。Thanks @Remedy92!
+- Claude: PTYプローブがアイドルで停止、再起動時に自動クリーン、ウォッチドッグで暴走プロセスを防止。
+- メニューの磨き込み: 履歴をカード内でグループ化、履歴ラベルを簡素化、開いている間の更新を維持。
+- パフォーマンス: 使用ログスキャン + コスト解析を高速化。メニューアイコンをキャッシュしOpenAIダッシュボード解析を高速化。
+- Sparkle: 自動チェック時に自動ダウンロードし、更新準備ができたら再起動メニューを表示。
+- ウィジェット: 実験的なWidgetKit拡張（ウィジェットギャラリー/Dockの再起動が必要な場合あり）。
+- クレジット: 進捗バー表示 + OpenAI Webデータがある場合はクレジット履歴チャートを追加。
+- クレジット: 「クレジットを購入…」を独立メニューに移し、自動開始の購入フローを改善。
 
 ## 0.11.2 — 2025-12-21
-- ccusage-codex cost fetch is faster and more reliable by limiting the session scan window.
-- Fix ccusage cost fetch hanging for large Codex histories by draining subprocess output while commands run.
-- Fix merged-icon loading animation when another provider is fetching (only the selected provider animates).
-- CLI PATH capture now uses an interactive login shell and merges with the app PATH, fixing missing Node/Codex/Claude/Gemini resolution for NVM-style installs.
+- ccusage-codex のコスト取得を高速/安定化（セッションスキャンの範囲を制限）。
+- 大きなCodex履歴でハングする問題を修正（コマンド実行中に出力を排出）。
+- 統合アイコンの読み込みアニメーションが他プロバイダ取得中に動く問題を修正（選択中のみアニメ）。
+- CLIのPATH取得が対話的ログインシェルを使うようになり、NVM系インストールでのNode/Codex/Claude/Gemini検出を改善。
 
 ## 0.11.1 — 2025-12-21
-- Gemini OAuth token refresh now supports Bun/npm installations. Thanks @ben-vargas!
+- GeminiのOAuthトークン更新がBun/npmインストールをサポート。Thanks @ben-vargas!
 
 ## 0.11.0 — 2025-12-21
-- New optional cost display in the menu (session + last 30 days), powered by ccusage. Thanks @Xuanwo!
-- Fix loading-state card spacing to avoid double separators.
+- メニューに任意のコスト表示（セッション + 過去30日）を追加。ccusageがベース。Thanks @Xuanwo!
+- ローディング時のカード間隔を修正（ダブル区切り回避）。
 
 ## 0.10.0 — 2025-12-20
-- Gemini provider support (usage, plan detection, login flow). Thanks @381181295!
-- Unified menu bar icon mode with a provider switcher and Merge Icons toggle (default on when multiple providers are enabled). Thanks @ibehnam!
-- Fix regression from 0.9.1 where CLI detection failed for some installs by restoring interactive login-shell PATH loading.
+- Geminiプロバイダ対応（使用量/プラン検出/ログインフロー）。Thanks @381181295!
+- プロバイダスイッチャー付きの統合メニューバーアイコンモードを追加（複数有効時に既定オン）。Thanks @ibehnam!
+- 0.9.1で一部環境のCLI検出が失敗する退行を修正（対話的ログインシェルPATH取得に戻す）。
 
 ## 0.9.1 — 2025-12-19
-- CLI resolution now uses the login shell PATH directly (no more heuristic path scanning), so Codex/Claude match your shell config reliably.
+- CLI解決がログインシェルPATHを直接使うように変更（ヒューリスティックなPATHスキャンを削除）。
 
 ## 0.9.0 — 2025-12-19
-- New optional OpenAI web access: reuses your signed-in Safari/Chrome session to show **Code review remaining**, **Usage breakdown**, and **Credits usage history** in the menu (no credentials stored).
-- Credits still come from the Codex CLI; OpenAI web access is only used for the dashboard extras above.
-- OpenAI web sessions auto-sync to the Codex CLI email, support multiple accounts, and reset/re-import cookies on account switches to avoid stale cross-account data.
-- Fix Chrome cookie import (macOS 10): signed-in Chrome sessions are detected reliably (thanks @tobihagemann!).
-- Usage breakdown submenu: compact chart with hover details for day/service totals.
-- New “Show usage as used” toggle to invert progress bars (default remains “% left”, now in Advanced).
-- Session (5-hour) reset now shows a relative countdown (“Resets in 3h 31m”) in the menu card for Codex and Claude.
-- Claude: fix reset parsing so “Resets …” can’t be mis-attributed to the wrong window (session vs weekly).
+- 新しいOpenAI Webアクセス: サインイン済みSafari/Chromeセッションを再利用し、**コードレビュー残量**、**使用量内訳**、**クレジット使用履歴**を表示（認証情報は保存しない）。
+- クレジットはCodex CLI由来のまま。OpenAI Webは上記のダッシュボード追加分のみ。
+- OpenAI WebセッションをCodex CLIメールに自動同期。複数アカウント対応。アカウント切替時にCookieを再取得し、アカウント間の古いデータを回避。
+- Chrome Cookie取り込みを修正（macOS 10）。サインイン済みChromeセッションを確実に検出。Thanks @tobihagemann!
+- 使用量内訳サブメニュー: 日別/サービス別の詳細をホバーで表示するコンパクトチャート。
+- 「使用量を使用済みとして表示」トグルを追加（既定は「残り%」のまま。高度な設定）。
+- セッション（5時間）のリセットが、Codex/Claudeのメニューカードで相対カウントダウン表示（「Resets in 3h 31m」）。
+- Claude: リセット解析を修正し、誤ったウィンドウ（セッション/週間）への紐付けを防止。
 
 ## 0.8.1 — 2025-12-17
-- Claude trust prompts (“Do you trust the files in this folder?”) are now auto-accepted during probes to prevent stuck refreshes. Thanks @tobihagemann!
+- Claudeの信頼プロンプト（「このフォルダのファイルを信頼しますか？」）をプローブ中に自動承認し、更新停止を防止。Thanks @tobihagemann!
 
 ## 0.8.0 — 2025-12-17
-- CodexBar is now available via Homebrew: `brew install --cask steipete/tap/codexbar` (updates via `brew upgrade --cask steipete/tap/codexbar`).
-- Added session quota notifications for the sliding 5-hour window (Codex + Claude): notifies when it hits 0% and when it’s available again, based only on observed refresh data (including startup when already depleted). Thanks @GKannanDev!
+- CodexBarをHomebrewで提供開始: `brew install --cask steipete/tap/codexbar`（更新: `brew upgrade --cask steipete/tap/codexbar`）。
+- 5時間のスライディングセッション枠の通知を追加（Codex + Claude）。0%到達時と回復時に通知（起動時に枯渇している場合も含む）。Thanks @GKannanDev!
 
 ## 0.7.3 — 2025-12-17
-- Claude Enterprise accounts whose Claude Code `/usage` panel only shows “Current session” no longer fail parsing; weekly usage is treated as unavailable (fixes #19).
+- Claude Enterpriseアカウントで`/usage`が「Current session」だけ表示されるケースの解析失敗を修正。週間使用量は未対応扱い（#19修正）。
 
 ## 0.7.2 — 2025-12-13
-- Claude “Open Dashboard” now routes subscription accounts (Max/Pro/Ultra/Team) to the usage page instead of the API console billing page. Thanks @auroraflux!
-- Codex/Claude binary resolution now detects mise/rtx installs (shims and newest installed tool version), fixing missing CLI detection for mise users. Thanks @philipp-spiess!
-- Claude usage/status probes now auto-accept the first-run “Ready to code here?” permission prompt (when launched from Finder), preventing timeouts and parse errors. Thanks @alexissan!
-- General preferences now surface full Codex/Claude fetch errors with one-click copy and expandable details, reducing first-run confusion when a CLI is missing.
-- Polished the menu bar “critter” icons: Claude is now a crisper, blockier pixel crab, and Codex has punchier eyes with reduced blurring in SwiftUI/menu rendering.
+- Claudeの「Open Dashboard」がサブスク系アカウント（Max/Pro/Ultra/Team）ではAPI請求ページではなく使用量ページを開くように変更。Thanks @auroraflux!
+- Codex/Claudeのバイナリ解決がmise/rtxインストール（shimと最新版）に対応し、CLI検出失敗を修正。Thanks @philipp-spiess!
+- Claude使用量/ステータスの初回プロンプト（Finder起動時の「Ready to code here?」）を自動承認し、タイムアウト/解析エラーを防止。Thanks @alexissan!
+- 一般設定にCodex/Claudeの取得エラーを全文コピー/展開付きで表示し、初回混乱を軽減。
+- メニューバーの「critter」アイコンを調整: Claudeはブロック状のピクセルカニに、Codexは目のボケを抑えてよりシャープに。
 
 ## 0.7.1 — 2025-12-09
-- Menu bar icons now render on a true 18 pt/2× backing with pixel-aligned bars and overlays for noticeably crisper edges.
-- PTY runner now preserves the caller’s environment (HOME/TERM/bun installs) while enriching PATH, preventing Codex/Claude
-  probes from failing when CLIs are installed via bun/nvm or need their auth/config paths.
-- Added regression tests to lock in the enriched environment behavior.
-- Fixed a first-launch crash on macOS 26 caused by the 1×1 keepalive window triggering endless constraint updates; the hidden
-  window now uses a safe size and no longer spams SwiftUI state warnings.
-- Menu action rows now ship with SF Symbol icons (refresh, dashboard, status, settings, about, quit, copy error) for clearer at-a-glance affordances.
-- When the Codex CLI is missing, menu and CLI now surface an actionable install hint (`npm i -g @openai/codex` / bun) instead of a generic PATH error.
-- Node manager (nvm/fnm) resolution corrected so codex/claude binaries — and their `node` — are found reliably even when installed via fnm aliases or nvm defaults. Thanks @aliceisjustplaying for surfacing the gaps.
-- Login menu now shows phase-specific subtitles and disables interaction while running: “Requesting login…” while starting the CLI, then “Waiting in browser…” once the auth URL is printed; success still triggers the macOS notification.
-- Login state is tracked per provider so Codex and Claude icons/menus no longer share the same in-flight status when switching accounts.
-- Claude login PTY runner detects the auth URL without clearing buffers, keeps the session alive until confirmation, and exposes a Sendable phase callback used by the menu.
-- Claude CLI detection now includes Claude Code’s self-updating paths (`~/.claude/local/claude`, `~/.claude/bin/claude`) so PTY probes work even when only the bundled installer is used.
+- メニューバーアイコンを18pt/2×の正しいバックで描画し、ピクセル整列バーでよりシャープに。
+- PTYランナーが呼び出し元の環境（HOME/TERM/bun）を保持しつつPATHを拡張し、bun/nvmインストールでのCLI失敗を回避。
+- 環境拡張の挙動を固定する回帰テストを追加。
+- macOS 26での初回クラッシュ（1×1キープアライブウィンドウの制約ループ）を修正。安全なサイズに変更し、SwiftUI警告を抑制。
+- メニューアクション行にSF Symbolsアイコン（更新/ダッシュボード/ステータス/設定/About/終了/エラーコピー）を追加。
+- Codex CLIが無い場合、メニューとCLIにインストールヒント（`npm i -g @openai/codex` / bun）を表示。
+- Nodeマネージャ（nvm/fnm）解決を修正し、fnmエイリアスやnvm既定でもcodex/claudeのバイナリと`node`が確実に見つかるように。Thanks @aliceisjustplaying!
+- ログインメニューにフェーズ別サブタイトルを追加。CLI起動中は「Requesting login…」、認証URL表示後は「Waiting in browser…」。成功時はmacOS通知。
+- ログイン状態をプロバイダ別に追跡し、アカウント切替時にCodex/Claudeのアイコン/メニューが共通の状態にならないように。
+- ClaudeログインPTYランナーが認証URLをバッファを消さずに検出し、確認までセッションを維持。Sendableなフェーズコールバックをメニューへ提供。
+- Claude CLI検出にClaude Codeの自動更新パス（`~/.claude/local/claude`, `~/.claude/bin/claude`）を追加し、バンドルインストーラのみでもPTYプローブが動くように。
 
 ## 0.7.0 — 2025-12-07
-- ✨ New rich menu card with inline progress bars and reset times for each provider, giving the menu a beautiful, at-a-glance dashboard feel (credit: Anton Sotkov @antons).
+- ✨ リッチなメニューカードを追加。各プロバイダの進捗バーとリセット時刻をインライン表示し、ひと目で分かるダッシュボード風に（credit: Anton Sotkov @antons）。
 
 ## 0.6.1 — 2025-12-07
-- Claude CLI probes stop passing `--dangerously-skip-permissions`, aligning with the default permission prompt and avoiding hidden first-run failures.
+- Claude CLIプローブから `--dangerously-skip-permissions` を削除し、既定の権限プロンプトに合わせて初回失敗を回避。
 
 ## 0.6.0 — 2025-12-04
-- New bundled CLI (`codexbar`) with single `usage` command, `--format text|json`, `--status`, and fast `-h/-V`.
-- CLI output now shows consistent headers (`Codex 0.x.y (codex-cli)`, `Claude Code <ver> (claude)`) and JSON includes `source` + `status`.
-- Advanced prefs install button symlinks `codexbar` into /usr/local/bin and /opt/homebrew/bin; docs refreshed.
+- 新しい同梱CLI（`codexbar`）を追加。単一の `usage` コマンド、`--format text|json`、`--status`、高速な `-h/-V`。
+- CLI出力のヘッダを統一（`Codex 0.x.y (codex-cli)`, `Claude Code <ver> (claude)`）し、JSONに `source` + `status` を追加。
+- 高度な設定のインストールボタンが `codexbar` を /usr/local/bin と /opt/homebrew/bin にシンボリックリンク。ドキュメント更新。
 
 ## 0.5.7 — 2025-11-26
-- Status Page and Usage Dashboard menu actions now honor the icon you click; Codex menus no longer open the Claude status site.
+- Status PageとUsage Dashboardのメニューアクションがクリックしたアイコンのプロバイダに従うよう修正（CodexがClaudeのステータスを開く問題を解消）。
 
 ## 0.5.6 — 2025-11-25
-- New playful “Surprise me” option adds occasional blinks/tilts/wiggles to the menu bar icons (one random effect at a time) plus a Debug “Blink now” trigger.
-- Preferences now include an Advanced tab (refresh cadence, Surprise me toggle, Debug visibility); window height trimmed ~20% for a tighter fit.
-- Motion timing eased and lengthened so blinks/wiggles feel smoother and less twitchy.
+- たまに点滅/傾き/揺れを入れる「Surprise me」オプションを追加（1回につき1種）。デバッグに「今すぐ点滅」も追加。
+- 設定に高度なタブを追加（更新間隔/Surprise me/デバッグ表示）。ウィンドウ高さを約20%削減。
+- 点滅/揺れのモーションを滑らかに、やや長めに調整。
 
 ## 0.5.5 — 2025-11-25
-- Claude usage scrape now recognizes the new “Current week (Sonnet only)” bar while keeping the legacy Opus label as a fallback.
-- Menu and docs now label the Claude tertiary limit as Sonnet to match the latest CLI wording.
-- PATH seeding now uses a deterministic binary locator plus a one-shot login-shell capture at startup (no globbed nvm paths); the Debug tab shows the resolved Codex binary and effective PATH layers.
+- Claude使用量スクレイプが新しい「Current week (Sonnet only)」バーに対応。旧Opusラベルはフォールバック。
+- メニュー/ドキュメントでClaudeの第3枠をSonnet表記に更新。
+- PATHシードを決定的なバイナリ探索 + 起動時ログインシェルキャプチャに変更（nvmのグロブ探索を削除）。Debugタブに解決済みCodexバイナリとPATHを表示。
 
 ## 0.5.4 — 2025-11-24
-- Status blurb under “Status Page” no longer prefixes the text with “Status:”, keeping the incident description concise.
-- PTY runner now registers cleanup before launch so both ends of the TTY and the process group are torn down even when `Process.run()` throws (no leaked fds when spawn fails).
+- 「Status Page」下のステータス文言から「Status:」プレフィックスを削除し、簡潔化。
+- PTYランナーが起動前にクリーンアップを登録し、`Process.run()` 失敗時でもTTY両端/プロセスグループを解放（fdリーク回避）。
 
 ## 0.5.3 — 2025-11-22
-- Added a per-provider “Status Page” menu item beneath Usage that opens the provider’s live status page (OpenAI or Claude).
-- Status API now refreshes alongside usage; incident states show a dot/! overlay on the status icon plus a status blurb under the menu item.
-- General preferences now include a default-on “Check provider status” toggle above refresh cadence.
+- プロバイダ別の「Status Page」メニュー項目をUsage下に追加（OpenAI/Claude）。
+- ステータスAPIが使用量更新と同時に更新され、インシデント状態はステータスアイコンにドット/!オーバーレイとメニュー下の説明文で表示。
+- 一般設定に「プロバイダのステータスを確認」トグルを追加（既定オン）。
 
 ## 0.5.2 — 2025-11-22
-- Release packaging now includes uploading the dSYM archive alongside the app zip to aid crash symbolication (policy documented in the shared mac release guide).
-- Claude PTY fallback removed: Claude probes now rely solely on `script` stdout parsing, and the generic TTY runner is trimmed to Codex `/status` handling.
-- Fixed a busy-loop on the codex RPC stderr pipe (handler now detaches on EOF), eliminating the long-running high-CPU spin reported in issue #9.
+- リリースパッケージにdSYMアーカイブを同梱してクラッシュシンボリケーションを支援（方針は共通macリリースガイドに記載）。
+- ClaudeのPTYフォールバックを削除: Claudeプローブは `script` のstdout解析に統一し、一般TTYランナーはCodex `/status` のみに縮小。
+- codex RPCのstderrパイプがビジーループになる問題を修正（EOFでハンドラを解除）。issue #9の高CPUスピンを解消。
 
 ## 0.5.1 — 2025-11-22
-- Debug pane now exposes the Claude parse dump toggle, keeping the captured raw scrape in memory for inspection.
-- Claude About/debug views embed the current git hash so builds can be identified precisely.
-- Minor runtime robustness tweaks in the PTY runner and usage fetcher.
+- デバッグペインにClaudeの解析ダンプトグルを追加し、生スクレイプをメモリ保持。
+- Claude About/Debugに現在のgitハッシュを埋め込み、ビルド識別を可能に。
+- PTYランナーと使用量フェッチャの軽微な堅牢性改善。
 
 ## 0.5.0 — 2025-11-22
-- Codex usage/credits now use the codex app-server RPC by default (with PTY `/status` fallback when RPC is unavailable), reducing flakiness and speeding refreshes.
-- Codex CLI launches seed PATH with Homebrew/bun/npm/nvm/fnm defaults to avoid ENOENT in hardened/release builds; TTY probes reuse the same PATH.
-- Claude CLI probe now runs `/usage` and `/status` in parallel (no simulated typing), captures reset strings, and uses a resilient parser (label-first with ordered fallback) while keeping org/email separate by provider.
-- TTY runner now always tears down the spawned process group (even on early Claude login prompts) to avoid leaking CLI processes.
-- Default refresh cadence is now 5 minutes, and a 15-minute option was added to the settings picker.
-- Claude probes/version detection now start with `--allowed-tools ""` (tool access disabled) while keeping interactive PTY mode working.
-- Codex probes and version detection now launch the CLI with `-s read-only -a untrusted` to keep PTY runs sandboxed.
-- Codex warm-up screens (“data not available yet”) are handled gracefully: cached credits stay visible and the menu skips the scary parse error.
-- Codex reset times are shown for both RPC and TTY fallback, and plan labels are capitalized while emails stay verbatim.
+- Codexの使用量/クレジットをcodex app-server RPCで既定取得（RPC不可時はPTY `/status` フォールバック）し、安定性と速度を改善。
+- Codex CLI起動時にHomebrew/bun/npm/nvm/fnmのPATHをシードし、Hardened/ReleaseでのENOENTを回避。TTYプローブも同じPATHを使用。
+- Claude CLIプローブが `/usage` と `/status` を並列実行（模擬入力なし）、リセット文字列を取得、堅牢なパーサ（ラベル優先 + 順序フォールバック）を使用し、組織/メールはプロバイダ分離。
+- TTYランナーがプロセスグループを確実に終了（Claudeログインプロンプト途中でもリークしない）。
+- 既定の更新間隔を5分に変更し、15分オプションを追加。
+- Claudeプローブ/バージョン検出は `--allowed-tools ""` で開始（ツールアクセス無効）しつつ対話PTYを維持。
+- Codexプローブ/バージョン検出を `-s read-only -a untrusted` で起動しPTYをサンドボックス化。
+- Codexのウォームアップ画面（データ未取得）を安全に処理し、クレジットはキャッシュ維持、恐い解析エラーを回避。
+- Codexのリセット時刻をRPC/TTY双方で表示し、プランラベルはキャピタライズ、メールは原文のまま。
 
 ## 0.4.3 — 2025-11-21
-- Fix status item creation timing on macOS 15 by deferring NSStatusItem setup to after launch; adds a regression test for the path.
-- Menu bar icon with unknown usage now draws empty tracks (instead of a full bar when decorations are shown) by treating nil values as 0%.
+- macOS 15でのステータス項目作成タイミングを修正（起動後にNSStatusItemを作成）。回帰テストを追加。
+- 使用量不明時のメニューバーアイコンが空トラックを描画するよう修正（装飾時に全バーになるのを回避）。
 
 ## 0.4.2 — 2025-11-21
-- Sparkle updates re-enabled in release builds (disabled only for the debug bundle ID).
+- リリースビルドでSparkle更新を再有効化（debug bundle IDのみ無効）。
 
 ## 0.4.1 — 2025-11-21
-- Both Codex and Claude probes now run off the main thread (background PTY), avoiding menu/UI stalls during `/status` or `/usage` fetches.
-- Codex credits stay available even when `/status` times out: cached values are kept and errors are surfaced separately.
-- Claude/Codex provider autodetect runs on first launch (defaults to Codex if neither is installed) with a debug reset button.
-- Sparkle updates re-enabled in release builds (disabled only for debug bundle ID).
-- Claude probe now issues the `/usage` slash command directly to land on the Usage tab reliably and avoid palette misfires.
+- Codex/Claudeプローブをメインスレッド外で実行し、`/status`/`/usage` 中のUI停止を回避。
+- Codexクレジットは `/status` タイムアウトでもキャッシュを保持し、エラーを別途表示。
+- Codex/Claudeの自動検出を初回起動で実行（どちらも無ければCodex既定）。デバッグ用リセットボタンを追加。
+- リリースビルドでSparkle更新を再有効化（debug bundle IDのみ無効）。
+- Claudeプローブが `/usage` を直接叩いてUsageタブに遷移し、パレット誤動作を回避。
 
 ## 0.4.0 — 2025-11-21
-- Claude Code support: dedicated Claude menu/icon plus dual-wired menus when both providers are enabled; shows email/org/plan and Sonnet usage with clickable errors.
-- New Preferences window: General/About tabs with provider toggles, refresh cadence, start-at-login, and always-on Quit.
-- Codex credits without web login: we now read `codex /status` in a PTY, auto-skip the update prompt, and parse session/weekly/credits; cached credits stay visible on transient timeouts.
-- Resilience: longer PTY timeouts, cached-credit fallback, one-line menu errors, and clearer parse/update messages.
+- Claude Code対応: 専用Claudeメニュー/アイコン + 両方有効時の二重メニュー。メール/組織/プランとSonnet使用量を表示し、クリック可能なエラーを追加。
+- 新しい設定ウィンドウ: 一般/Aboutタブ、プロバイダトグル、更新間隔、ログイン時起動、常時Quit。
+- Codexクレジット（Web不要）: `codex /status` をPTYで読み、更新プロンプトを自動スキップし、セッション/週間/クレジットを解析。クレジットはキャッシュ保持。
+- 堅牢性: PTYタイムアウトを延長し、クレジットキャッシュフォールバック、1行エラー、解析/更新メッセージの改善。
 
 ## 0.3.0 — 2025-11-18
-- Credits support: reads Codex CLI `/status` via PTY (no browser login), shows remaining credits inline, and moves history to a submenu.
-- Sign-in window with cookie reuse and a logout/clear-cookies action; waits out workspace picker and auto-navigates to usage page.
-- Menu: credits line bolded; login prompt hides once credits load; debug toggle always visible (HTML dump).
-- Icon: when weekly is empty, top bar becomes a thick credits bar (capped at 1k); otherwise bars stay 5h/weekly.
+- クレジット対応: Codex CLIの `/status` をPTYで読み（ブラウザ不要）、残りクレジットを表示し、履歴はサブメニューへ移動。
+- サインインウィンドウとCookie再利用、ログアウト/クッキー削除アクションを追加。ワークスペース選択を待ち、使用量ページへ自動遷移。
+- メニュー: クレジット行を太字に。クレジット取得後はログインプロンプトを非表示。デバッグトグルは常に表示（HTMLダンプ）。
+- アイコン: 週間が空のとき上バーを太いクレジットバー（1k上限）に変更。通常は5時間/週間の2本バー。
 
 ## 0.2.2 — 2025-11-17
-- Menu bar icon stays static when no account/usage is present; loading animation only runs while fetching (12 fps) to keep idle CPU low.
-- Usage refresh first tails the newest session log (512 KB window) before scanning everything, reducing IO on large Codex logs.
-- Packaging/signing hardened: strip extended attributes, delete AppleDouble (`._*`) files, and re-sign Sparkle + app bundle to satisfy Gatekeeper.
+- アカウント/使用量が無い場合、メニューバーアイコンは静止。読み込みアニメーションは取得中のみ（12fps）でアイドルCPUを抑制。
+- 使用量更新は最新セッションログ（512KB）を先にtailし、全件スキャン前にIOを削減。
+- パッケージ/署名を強化: 拡張属性の除去、AppleDouble（`._*`）削除、Sparkle + アプリの再署名でGatekeeperを満たす。
 
 ## 0.2.1 — 2025-11-17
-- Patch bump for refactor/relative-time changes; packaging scripts set to 0.2.1 (5).
-- Streamlined Codex usage parsing: modern rate-limit handling, flexible reset time parsing, and account rate-limit updates (thanks @jazzyalex and https://jazzyalex.github.io/agent-sessions/).
+- リファクタ/相対時刻変更のパッチ。パッケージスクリプトを0.2.1（5）に設定。
+- Codex使用量解析を整理: 新しいレート制限処理、柔軟なリセット時刻解析、アカウントのレート制限更新（Thanks @jazzyalex / https://jazzyalex.github.io/agent-sessions/）。
 
 ## 0.2.0 — 2025-11-16
-- CADisplayLink-based loading animations (macOS 15 displayLink API) with randomized patterns (Knight Rider, Cylon, outside-in, race, pulse) and debug replay cycling through all.
-- Debug replay toggle (`defaults write com.steipete.codexbar debugMenuEnabled -bool YES`) to view every pattern.
-- Usage Dashboard link in menu; menu layout tweaked.
-- Updated time now shows relative formatting when fresher than 24h; refactored sources into smaller files for maintainability.
-- Version bumped to 0.2.0 (4).
+- CADisplayLinkベースの読み込みアニメーション（macOS 15 displayLink API）。ランダムパターン（Knight Rider、Cylon、外側→内側、レース、パルス）とデバッグ再生。
+- デバッグ再生トグル（`defaults write com.steipete.codexbar debugMenuEnabled -bool YES`）で全パターンを確認。
+- メニューにUsage Dashboardリンクを追加し、レイアウト調整。
+- 更新時刻が24時間以内は相対表記に変更。ソースを小さなファイルに分割して保守性を向上。
+- バージョンを0.2.0（4）に更新。
 
 ## 0.1.2 — 2025-11-16
-- Animated loading icon (dual bars sweep until usage arrives); always uses rendered template icon.
-- Sparkle embedding/signing fixed with deep+timestamp; notarization pipeline solid.
-- Icon conversion scripted via ictool with docs.
-- Menu: settings submenu, no GitHub item; About link clickable.
+- 読み込みアニメーション付きアイコン（2本バーが掃引し、使用量取得まで継続）。常にテンプレートアイコンを使用。
+- Sparkleの埋め込み/署名を修正（deep + timestamp）。ノータライズのパイプラインを安定化。
+- ictoolによるアイコン変換をスクリプト化（ドキュメント追加）。
+- メニュー: 設定サブメニュー、GitHub項目の削除、Aboutリンクのクリック対応。
 
 ## 0.1.1 — 2025-11-16
-- Launch-at-login toggle (SMAppService) and saved preference applied at startup.
-- Sparkle auto-update wiring (SUFeedURL to GitHub, SUPublicEDKey set); Settings submenu with auto-update toggle + Check for Updates.
-- Menu cleanup: settings grouped, GitHub menu removed, About link clickable.
-- Usage parser scans newest session logs until it finds `token_count` events.
-- Icon pipeline fixed: regenerated `.icns` via ictool with proper transparency (docs in docs/icon.md).
-- Added lint/format configs, Swift Testing, strict concurrency, and usage parser tests.
-- Notarized release build "CodexBar-0.1.0.zip" remains current artifact; app version 0.1.1.
+- ログイン時起動トグル（SMAppService）と保存済み設定を起動時に適用。
+- Sparkle自動更新を配線（SUFeedURLをGitHubに設定、SUPublicEDKeyを設定）。設定サブメニューに自動更新トグル + 更新確認を追加。
+- メニュー整理: 設定をグループ化、GitHubメニュー削除、Aboutリンクをクリック可能に。
+- 使用量パーサが最新セッションログを走査し、`token_count` イベントを見つけるまで処理。
+- アイコンパイプライン修正: ictoolで `.icns` を再生成し透明性を確保（docs/icon.md）。
+- lint/format設定、Swift Testing、厳密並行性、使用量パーサテストを追加。
+- ノータライズ済みリリースビルド「CodexBar-0.1.0.zip」を現行アーティファクトとして維持。アプリバージョンは0.1.1。
 
 ## 0.1.0 — 2025-11-16
-- Initial CodexBar release: macOS 15+ menu bar app, no Dock icon.
-- Reads latest Codex CLI `token_count` events from session logs (5h + weekly usage, reset times); no extra login or browser scraping.
-- Shows account email/plan decoded locally from `auth.json`.
-- Horizontal dual-bar icon (top = 5h, bottom = weekly); dims on errors.
-- Configurable refresh cadence, manual refresh, and About links.
-- Async off-main log parsing for responsiveness; strict-concurrency build flags enabled.
-- Packaging + signing/notarization scripts (arm64); build scripts convert `.icon` bundle to `.icns`.
+- CodexBar初期リリース: macOS 15+ のメニューバーアプリ、Dockアイコンなし。
+- Codex CLIのセッションログから最新の `token_count` イベントを読み取り（5時間 + 週間使用量、リセット時刻）。追加ログインやブラウザスクレイプは不要。
+- `auth.json` をローカルでデコードし、アカウントのメール/プランを表示。
+- 横並び2本バーのアイコン（上=5時間、下=週間）。エラー時は暗く表示。
+- 更新間隔の設定、手動更新、Aboutリンク。
+- 応答性のためログ解析をメイン外で実行。厳密並行性のビルドフラグを有効化。
+- パッケージ/署名/ノータライズのスクリプト（arm64）を追加。`.icon` バンドルから `.icns` への変換も含む。

@@ -21,8 +21,8 @@ struct CodexBarSwitcherWidget: Widget {
         { entry in
             CodexBarSwitcherWidgetView(entry: entry)
         }
-        .configurationDisplayName("CodexBar Switcher")
-        .description("Usage widget with a provider switcher.")
+        .configurationDisplayName("CodexBar 切替")
+        .description("プロバイダ切替付きの使用量ウィジェットです。")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -38,8 +38,8 @@ struct CodexBarUsageWidget: Widget {
         { entry in
             CodexBarUsageWidgetView(entry: entry)
         }
-        .configurationDisplayName("CodexBar Usage")
-        .description("Session and weekly usage with credits and costs.")
+        .configurationDisplayName("CodexBar 使用量")
+        .description("セッション/週間の使用量とクレジット/コストを表示します。")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -55,8 +55,8 @@ struct CodexBarHistoryWidget: Widget {
         { entry in
             CodexBarHistoryWidgetView(entry: entry)
         }
-        .configurationDisplayName("CodexBar History")
-        .description("Usage history chart with recent totals.")
+        .configurationDisplayName("CodexBar 履歴")
+        .description("最近の合計を含む使用履歴チャートです。")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
@@ -72,8 +72,8 @@ struct CodexBarCompactWidget: Widget {
         { entry in
             CodexBarCompactWidgetView(entry: entry)
         }
-        .configurationDisplayName("CodexBar Metric")
-        .description("Compact widget for credits or cost.")
+        .configurationDisplayName("CodexBar 指標")
+        .description("クレジット/コストを表示するコンパクトウィジェットです。")
         .supportedFamilies([.systemSmall])
     }
 }
