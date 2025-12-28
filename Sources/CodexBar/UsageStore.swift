@@ -89,17 +89,17 @@ enum ProviderStatusIndicator: String {
     func label(language: AppLanguage) -> String {
         switch self {
         case .none:
-            return language == .japanese ? "正常稼働" : "Operational"
+            language == .japanese ? "正常稼働" : "Operational"
         case .minor:
-            return language == .japanese ? "一部障害" : "Partial outage"
+            language == .japanese ? "一部障害" : "Partial outage"
         case .major:
-            return language == .japanese ? "大規模障害" : "Major outage"
+            language == .japanese ? "大規模障害" : "Major outage"
         case .critical:
-            return language == .japanese ? "重大な障害" : "Critical issue"
+            language == .japanese ? "重大な障害" : "Critical issue"
         case .maintenance:
-            return language == .japanese ? "メンテナンス" : "Maintenance"
+            language == .japanese ? "メンテナンス" : "Maintenance"
         case .unknown:
-            return language == .japanese ? "ステータス不明" : "Status unknown"
+            language == .japanese ? "ステータス不明" : "Status unknown"
         }
     }
 }

@@ -16,19 +16,19 @@ public struct ExternalTextLocalizer {
     public func providerShortName(_ provider: UsageProvider) -> String {
         switch provider {
         case .codex:
-            return "Codex"
+            "Codex"
         case .claude:
-            return "Claude"
+            "Claude"
         case .gemini:
-            return "Gemini"
+            "Gemini"
         case .antigravity:
-            return self.l10n.choose("Anti", "アンチ")
+            self.l10n.choose("Anti", "アンチ")
         case .cursor:
-            return "Cursor"
+            "Cursor"
         case .zai:
-            return "z.ai"
+            "z.ai"
         case .factory:
-            return "Droid"
+            "Droid"
         }
     }
 
@@ -94,7 +94,7 @@ public struct ExternalTextLocalizer {
                 (#"\bTrial\b"#, "トライアル"),
                 (#"\bBasic\b"#, "ベーシック"),
                 (#"\bUnlimited\b"#, "無制限"),
-        ])
+            ])
     }
 
     public func localizedStatusDescription(_ text: String) -> String {
@@ -114,7 +114,7 @@ public struct ExternalTextLocalizer {
                 (#"\bIdentified\b"#, "原因特定"),
                 (#"\bMonitoring\b"#, "監視中"),
                 (#"\bResolved\b"#, "解決済み"),
-        ])
+            ])
     }
 
     public func localizedErrorMessage(_ text: String) -> String {
@@ -122,12 +122,17 @@ public struct ExternalTextLocalizer {
         let exact = self.applyReplacements(
             text,
             replacements: [
-                (#"No Codex sessions found yet\. Run at least one Codex prompt first\."#,
-                 "Codexのセッションがまだありません。まずCodexで1回実行してください。"),
-                (#"Found sessions, but no rate limit events yet\."#,
-                 "セッションは見つかりましたが、レート制限イベントがまだありません。"),
-                (#"Could not parse Codex session log\."#,
-                 "Codexのセッションログを解析できませんでした。"),
+                (
+                    #"No Codex sessions found yet\. Run at least one Codex prompt "# +
+                        #"first\."#,
+                    "Codexのセッションがまだありません。まずCodexで1回実行してください。"),
+                (
+                    #"Found sessions, but no rate limit events "# +
+                        #"yet\."#,
+                    "セッションは見つかりましたが、レート制限イベントがまだありません。"),
+                (
+                    #"Could not parse Codex session log\."#,
+                    "Codexのセッションログを解析できませんでした。"),
             ])
         return self.applyReplacements(
             exact,

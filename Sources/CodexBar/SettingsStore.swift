@@ -25,15 +25,15 @@ enum RefreshFrequency: String, CaseIterable, Identifiable {
     func label(language: AppLanguage) -> String {
         switch self {
         case .manual:
-            return language == .japanese ? "手動" : "Manual"
+            language == .japanese ? "手動" : "Manual"
         case .oneMinute:
-            return language == .japanese ? "1分" : "1 min"
+            language == .japanese ? "1分" : "1 min"
         case .twoMinutes:
-            return language == .japanese ? "2分" : "2 min"
+            language == .japanese ? "2分" : "2 min"
         case .fiveMinutes:
-            return language == .japanese ? "5分" : "5 min"
+            language == .japanese ? "5分" : "5 min"
         case .fifteenMinutes:
-            return language == .japanese ? "15分" : "15 min"
+            language == .japanese ? "15分" : "15 min"
         }
     }
 }

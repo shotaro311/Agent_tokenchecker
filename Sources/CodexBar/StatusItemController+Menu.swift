@@ -1351,7 +1351,6 @@ private final class ProviderSwitcherView: NSView {
             NSColor(deviceRed: 255 / 255, green: 107 / 255, blue: 53 / 255, alpha: 1) // Factory orange
         }
     }
-
 }
 
 private final class PaddedToggleButton: NSButton {

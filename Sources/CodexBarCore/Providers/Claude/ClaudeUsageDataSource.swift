@@ -18,11 +18,11 @@ public enum ClaudeUsageDataSource: String, CaseIterable, Identifiable, Sendable 
     public func displayName(language: AppLanguage) -> String {
         switch self {
         case .oauth:
-            return language == .japanese ? "OAuth API" : "OAuth API"
+            language == .japanese ? "OAuth API" : "OAuth API"
         case .web:
-            return language == .japanese ? "Web API（Cookie）" : "Web API (cookies)"
+            language == .japanese ? "Web API（Cookie）" : "Web API (cookies)"
         case .cli:
-            return language == .japanese ? "CLI（PTY）" : "CLI (PTY)"
+            language == .japanese ? "CLI（PTY）" : "CLI (PTY)"
         }
     }
 }

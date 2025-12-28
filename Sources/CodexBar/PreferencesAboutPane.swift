@@ -71,9 +71,18 @@ struct AboutPane: View {
                     icon: "chevron.left.slash.chevron.right",
                     title: "GitHub",
                     url: "https://github.com/steipete/CodexBar")
-                AboutLinkRow(icon: "globe", title: l10n.choose("Website", "ウェブサイト"), url: "https://steipete.me")
-                AboutLinkRow(icon: "bird", title: l10n.choose("Twitter", "Twitter"), url: "https://twitter.com/steipete")
-                AboutLinkRow(icon: "envelope", title: l10n.choose("Email", "メール"), url: "mailto:peter@steipete.me")
+                AboutLinkRow(
+                    icon: "globe",
+                    title: l10n.choose("Website", "ウェブサイト"),
+                    url: "https://steipete.me")
+                AboutLinkRow(
+                    icon: "bird",
+                    title: l10n.choose("Twitter", "Twitter"),
+                    url: "https://twitter.com/steipete")
+                AboutLinkRow(
+                    icon: "envelope",
+                    title: l10n.choose("Email", "メール"),
+                    url: "mailto:peter@steipete.me")
             }
             .padding(.top, 8)
             .frame(maxWidth: .infinity)

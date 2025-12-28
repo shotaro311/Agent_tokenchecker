@@ -55,14 +55,14 @@ struct ProvidersPane: View {
                     if !isPresented { self.activeConfirmation = nil }
                 }),
             actions: {
-                    if let active = self.activeConfirmation {
-                        Button(active.confirmTitle) {
-                            active.onConfirm()
-                            self.activeConfirmation = nil
-                        }
-                        Button(self.l10n.choose("Cancel", "キャンセル"), role: .cancel) { self.activeConfirmation = nil }
+                if let active = self.activeConfirmation {
+                    Button(active.confirmTitle) {
+                        active.onConfirm()
+                        self.activeConfirmation = nil
                     }
-                },
+                    Button(self.l10n.choose("Cancel", "キャンセル"), role: .cancel) { self.activeConfirmation = nil }
+                }
+            },
             message: {
                 if let active = self.activeConfirmation {
                     Text(active.message)

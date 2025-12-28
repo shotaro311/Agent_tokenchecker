@@ -217,17 +217,21 @@ private struct CompactMetricView: View {
     private var display: (value: String, label: String, detail: String?) {
         switch self.metric {
         case .credits:
-            let value = self.entry.creditsRemaining.map { WidgetFormat.credits($0, language: self.localization.language) } ?? "—"
+            let value = self.entry.creditsRemaining
+                .map { WidgetFormat.credits($0, language: self.localization.language) }
+                ?? "—"
             return (value, self.localization.text("Credits left", "残りクレジット"), nil)
         case .todayCost:
             let value = self.entry.tokenUsage?.sessionCostUSD
-                .map { WidgetFormat.usd($0, language: self.localization.language) } ?? "—"
+                .map { WidgetFormat.usd($0, language: self.localization.language) }
+                ?? "—"
             let detail = self.entry.tokenUsage?.sessionTokens
                 .map { WidgetFormat.tokenCount($0, language: self.localization.language) }
             return (value, self.localization.text("Today cost", "今日のコスト"), detail)
         case .last30DaysCost:
             let value = self.entry.tokenUsage?.last30DaysCostUSD
-                .map { WidgetFormat.usd($0, language: self.localization.language) } ?? "—"
+                .map { WidgetFormat.usd($0, language: self.localization.language) }
+                ?? "—"
             let detail = self.entry.tokenUsage?.last30DaysTokens
                 .map { WidgetFormat.tokenCount($0, language: self.localization.language) }
             return (value, self.localization.text("30d cost", "30日間コスト"), detail)
@@ -311,12 +315,16 @@ private struct SwitcherSmallUsageView: View {
         let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 8) {
             UsageBarRow(
-                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
+                title: self.localizedLabel(
+                    metadata?.sessionLabel,
+                    fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
+                title: self.localizedLabel(
+                    metadata?.weeklyLabel,
+                    fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
@@ -344,12 +352,16 @@ private struct SwitcherMediumUsageView: View {
         let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 10) {
             UsageBarRow(
-                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
+                title: self.localizedLabel(
+                    metadata?.sessionLabel,
+                    fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
+                title: self.localizedLabel(
+                    metadata?.weeklyLabel,
+                    fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
@@ -383,12 +395,16 @@ private struct SwitcherLargeUsageView: View {
         let metadata = ProviderDefaults.metadata[self.entry.provider]
         VStack(alignment: .leading, spacing: 12) {
             UsageBarRow(
-                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
+                title: self.localizedLabel(
+                    metadata?.sessionLabel,
+                    fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
+                title: self.localizedLabel(
+                    metadata?.weeklyLabel,
+                    fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
@@ -440,12 +456,16 @@ private struct SmallUsageView: View {
         VStack(alignment: .leading, spacing: 8) {
             HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt, localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
+                title: self.localizedLabel(
+                    metadata?.sessionLabel,
+                    fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
+                title: self.localizedLabel(
+                    metadata?.weeklyLabel,
+                    fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
@@ -475,12 +495,16 @@ private struct MediumUsageView: View {
         VStack(alignment: .leading, spacing: 10) {
             HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt, localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
+                title: self.localizedLabel(
+                    metadata?.sessionLabel,
+                    fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
+                title: self.localizedLabel(
+                    metadata?.weeklyLabel,
+                    fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
@@ -516,12 +540,16 @@ private struct LargeUsageView: View {
         VStack(alignment: .leading, spacing: 12) {
             HeaderView(provider: self.entry.provider, updatedAt: self.entry.updatedAt, localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.sessionLabel, fallback: self.localization.text("Session", "セッション")),
+                title: self.localizedLabel(
+                    metadata?.sessionLabel,
+                    fallback: self.localization.text("Session", "セッション")),
                 percentLeft: self.entry.primary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)
             UsageBarRow(
-                title: self.localizedLabel(metadata?.weeklyLabel, fallback: self.localization.text("Weekly", "週間")),
+                title: self.localizedLabel(
+                    metadata?.weeklyLabel,
+                    fallback: self.localization.text("Weekly", "週間")),
                 percentLeft: self.entry.secondary?.remainingPercent,
                 color: WidgetColors.color(for: self.entry.provider),
                 localization: self.localization)

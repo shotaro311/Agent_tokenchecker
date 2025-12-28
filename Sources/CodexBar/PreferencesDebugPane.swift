@@ -36,8 +36,12 @@ struct DebugPane: View {
                         "Pick a pattern and replay it in the menu bar. \"Random\" keeps the existing behavior.",
                         "パターンを選んでメニューバーで再生します。「ランダム」は既存の挙動を維持します。"))
                 {
-                    Picker(self.l10n.choose("Animation pattern", "アニメーションパターン"), selection: self.animationPatternBinding) {
-                        Text(self.l10n.choose("Random (default)", "ランダム（既定）")).tag(nil as LoadingPattern?)
+                    Picker(
+                        self.l10n.choose("Animation pattern", "アニメーションパターン"),
+                        selection: self.animationPatternBinding)
+                    {
+                        Text(self.l10n.choose("Random (default)", "ランダム（既定）"))
+                            .tag(nil as LoadingPattern?)
                         ForEach(LoadingPattern.allCases) { pattern in
                             Text(pattern.displayName).tag(Optional(pattern))
                         }
@@ -101,7 +105,9 @@ struct DebugPane: View {
 
                         if self.currentLogProvider == .claude {
                             Button { self.loadClaudeDump() } label: {
-                                Label(self.l10n.choose("Load parse dump", "解析ダンプを読み込み"), systemImage: "doc.text.magnifyingglass")
+                                Label(
+                                    self.l10n.choose("Load parse dump", "解析ダンプを読み込み"),
+                                    systemImage: "doc.text.magnifyingglass")
                             }
                             .disabled(self.isLoadingLog)
                         }
@@ -253,7 +259,9 @@ struct DebugPane: View {
                                 self.simulatedErrorText,
                                 provider: self.currentErrorProvider)
                         } label: {
-                            Label(self.l10n.choose("Set menu error", "メニューエラーを設定"), systemImage: "exclamationmark.triangle")
+                            Label(
+                                self.l10n.choose("Set menu error", "メニューエラーを設定"),
+                                systemImage: "exclamationmark.triangle")
                         }
                         .controlSize(.small)
 

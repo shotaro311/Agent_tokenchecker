@@ -12,18 +12,18 @@ struct UsageMenuCardView: View {
             func labelSuffix(language: AppLanguage) -> String {
                 switch self {
                 case .left:
-                    return language == .japanese ? "残り" : "left"
+                    language == .japanese ? "残り" : "left"
                 case .used:
-                    return language == .japanese ? "使用済み" : "used"
+                    language == .japanese ? "使用済み" : "used"
                 }
             }
 
             func accessibilityLabel(language: AppLanguage) -> String {
                 switch self {
                 case .left:
-                    return language == .japanese ? "残りの使用量" : "Usage remaining"
+                    language == .japanese ? "残りの使用量" : "Usage remaining"
                 case .used:
-                    return language == .japanese ? "使用済みの使用量" : "Usage used"
+                    language == .japanese ? "使用済みの使用量" : "Usage used"
                 }
             }
         }

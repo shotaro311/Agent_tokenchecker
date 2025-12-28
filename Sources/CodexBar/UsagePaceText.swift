@@ -31,11 +31,11 @@ enum UsagePaceText {
     private static func label(for stage: UsagePace.Stage, language: AppLanguage) -> String {
         switch stage {
         case .onTrack:
-            return language == .japanese ? "順調" : "On pace"
+            language == .japanese ? "順調" : "On pace"
         case .slightlyAhead, .ahead, .farAhead:
-            return language == .japanese ? "上回り" : "Ahead"
+            language == .japanese ? "上回り" : "Ahead"
         case .slightlyBehind, .behind, .farBehind:
-            return language == .japanese ? "下回り" : "Behind"
+            language == .japanese ? "下回り" : "Behind"
         }
     }
 
