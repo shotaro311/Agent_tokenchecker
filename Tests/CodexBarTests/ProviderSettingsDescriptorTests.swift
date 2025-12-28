@@ -24,6 +24,7 @@ struct ProviderSettingsDescriptorTests {
                 provider: provider,
                 settings: settings,
                 store: store,
+                language: .english,
                 boolBinding: { keyPath in
                     Binding(
                         get: { settings[keyPath: keyPath] },
@@ -77,6 +78,7 @@ struct ProviderSettingsDescriptorTests {
             provider: .codex,
             settings: settings,
             store: store,
+            language: .english,
             boolBinding: { keyPath in
                 Binding(
                     get: { settings[keyPath: keyPath] },
@@ -108,6 +110,7 @@ struct ProviderSettingsDescriptorTests {
             provider: .claude,
             settings: settings,
             store: store,
+            language: .english,
             boolBinding: { keyPath in
                 Binding(
                     get: { settings[keyPath: keyPath] },
