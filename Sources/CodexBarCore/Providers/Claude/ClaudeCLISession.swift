@@ -31,9 +31,9 @@ actor ClaudeCLISession {
     private var startedAt: Date?
 
     private let sendOnSubstrings: [String: String] = [
-        "Do you trust the files in this folder?": "y\r",
-        "Ready to code here?": "\r",
-        "Press Enter to continue": "\r",
+        "Do you trust the files in this folder?": "y\n",
+        "Ready to code here?": "\n",
+        "Press Enter to continue": "\n",
     ]
 
     private struct RollingBuffer {
@@ -85,7 +85,7 @@ actor ClaudeCLISession {
         let trimmed = subcommand.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             try self.send(trimmed)
-            try self.send("\r")
+            try self.send("\n")
         }
 
         let stopNeedles = stopOnSubstrings.map { Data($0.utf8) }
@@ -145,7 +145,7 @@ actor ClaudeCLISession {
             }
 
             if let every = sendEnterEvery, Date().timeIntervalSince(lastEnterAt) >= every {
-                try? self.send("\r")
+                try? self.send("\n")
                 lastEnterAt = Date()
             }
 
@@ -211,6 +211,9 @@ actor ClaudeCLISession {
         let workingDirectory = ClaudeStatusProbe.probeWorkingDirectoryURL()
         proc.currentDirectoryURL = workingDirectory
         var env = TTYCommandRunner.enrichedEnvironment()
+        // Ensure stable, parseable output regardless of the user's locale.
+        env["LANG"] = "en_US.UTF-8"
+        env["LC_ALL"] = "en_US.UTF-8"
         env["PWD"] = workingDirectory.path
         proc.environment = env
 

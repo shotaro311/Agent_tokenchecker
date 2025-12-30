@@ -555,6 +555,14 @@ public struct ClaudeStatusProbe: Sendable {
         }
         let body = parts.joined(separator: "\n")
         Task { @MainActor in self.recordDump(body) }
+
+        // Also write a local file for CLI/test debugging (keeps the in-memory dump inaccessible after exit).
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd_HHmmss"
+        let filename = "claude_parse_dump_\(formatter.string(from: Date())).txt"
+        let url = Self.probeWorkingDirectoryURL().appendingPathComponent(filename)
+        try? body.write(to: url, atomically: true, encoding: .utf8)
     }
 
     // MARK: - Dump storage (in-memory ring buffer)
@@ -629,26 +637,68 @@ public struct ClaudeStatusProbe: Sendable {
 
     // Run claude CLI inside a PTY so we can respond to interactive permission prompts.
     private static func capture(subcommand: String, binary: String, timeout: TimeInterval) async throws -> String {
-        let stopOnSubstrings = subcommand == "/usage" ? ["Current session"] : []
+        let stopOnSubstrings: [String]
+        let idleTimeout: TimeInterval?
+        let settleAfterStop: TimeInterval
+
+        if subcommand == "/usage" {
+            // Don't stop too early (the usage panel renders progressively). Wait for the final section.
+            stopOnSubstrings = [
+                "Extra usage",
+                // Error cases that may not render the full panel.
+                "Failed to load usage data",
+                "Do you trust the files in this folder?",
+                "token_expired",
+                "TOKEN_EXPIRED",
+                "authentication_error",
+                "AUTHENTICATION_ERROR",
+            ]
+            idleTimeout = nil
+            settleAfterStop = 2.0
+        } else {
+            stopOnSubstrings = []
+            idleTimeout = 3.0
+            settleAfterStop = 0.25
+        }
+
+        let runner = TTYCommandRunner()
+        let workingDirectory = Self.probeWorkingDirectoryURL()
+        let sendOnSubstrings = [
+            "Do you trust the files in this folder?": "y\r",
+            "Ready to code here?": "\r",
+            "Press Enter to continue": "\r",
+        ]
+        let options = TTYCommandRunner.Options(
+            rows: 50,
+            cols: 160,
+            timeout: timeout,
+            idleTimeout: idleTimeout,
+            workingDirectory: workingDirectory,
+            environmentOverrides: [
+                "LANG": "en_US.UTF-8",
+                "LC_ALL": "en_US.UTF-8",
+            ],
+            extraArgs: [subcommand, "--allowed-tools", ""],
+            initialDelay: 0.4,
+            sendEnterEvery: nil,
+            sendOnSubstrings: sendOnSubstrings,
+            stopOnURL: false,
+            stopOnSubstrings: stopOnSubstrings,
+            settleAfterStop: settleAfterStop)
+
         do {
-            return try await ClaudeCLISession.shared.capture(
-                subcommand: subcommand,
-                binary: binary,
-                timeout: timeout,
-                idleTimeout: 3.0,
-                stopOnSubstrings: stopOnSubstrings,
-                settleAfterStop: subcommand == "/usage" ? 2.0 : 0.25,
-                sendEnterEvery: nil)
-        } catch ClaudeCLISession.SessionError.processExited {
-            await ClaudeCLISession.shared.reset()
-            throw ClaudeStatusProbeError.timedOut
-        } catch ClaudeCLISession.SessionError.timedOut {
-            throw ClaudeStatusProbeError.timedOut
-        } catch ClaudeCLISession.SessionError.launchFailed(_) {
-            throw ClaudeStatusProbeError.claudeNotInstalled
-        } catch {
-            await ClaudeCLISession.shared.reset()
-            throw error
+            return try await Task.detached {
+                try runner.run(binary: binary, send: "", options: options).text
+            }.value
+        } catch let err as TTYCommandRunner.Error {
+            switch err {
+            case .binaryNotFound:
+                throw ClaudeStatusProbeError.claudeNotInstalled
+            case .timedOut:
+                throw ClaudeStatusProbeError.timedOut
+            case let .launchFailed(message):
+                throw ClaudeStatusProbeError.parseFailed(message)
+            }
         }
     }
 }

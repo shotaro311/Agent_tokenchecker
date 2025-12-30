@@ -55,14 +55,11 @@ struct StatusMenuTests {
         settings.mergeIcons = true
 
         let registry = ProviderRegistry.shared
-        if let codexMeta = registry.metadata[.codex] {
-            settings.setProviderEnabled(provider: .codex, metadata: codexMeta, enabled: false)
+        for (provider, meta) in registry.metadata {
+            settings.setProviderEnabled(provider: provider, metadata: meta, enabled: false)
         }
         if let claudeMeta = registry.metadata[.claude] {
             settings.setProviderEnabled(provider: .claude, metadata: claudeMeta, enabled: true)
-        }
-        if let geminiMeta = registry.metadata[.gemini] {
-            settings.setProviderEnabled(provider: .gemini, metadata: geminiMeta, enabled: false)
         }
 
         let fetcher = UsageFetcher()

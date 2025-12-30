@@ -20,6 +20,7 @@ public struct TTYCommandRunner {
         /// Useful for interactive TUIs that render once and then wait for input indefinitely.
         public var idleTimeout: TimeInterval?
         public var workingDirectory: URL?
+        public var environmentOverrides: [String: String]
         public var extraArgs: [String] = []
         public var initialDelay: TimeInterval = 0.4
         public var sendEnterEvery: TimeInterval?
@@ -34,6 +35,7 @@ public struct TTYCommandRunner {
             timeout: TimeInterval = 20.0,
             idleTimeout: TimeInterval? = nil,
             workingDirectory: URL? = nil,
+            environmentOverrides: [String: String] = [:],
             extraArgs: [String] = [],
             initialDelay: TimeInterval = 0.4,
             sendEnterEvery: TimeInterval? = nil,
@@ -47,6 +49,7 @@ public struct TTYCommandRunner {
             self.timeout = timeout
             self.idleTimeout = idleTimeout
             self.workingDirectory = workingDirectory
+            self.environmentOverrides = environmentOverrides
             self.extraArgs = extraArgs
             self.initialDelay = initialDelay
             self.sendEnterEvery = sendEnterEvery
@@ -244,6 +247,11 @@ public struct TTYCommandRunner {
         if let workingDirectory = options.workingDirectory {
             proc.currentDirectoryURL = workingDirectory
             env["PWD"] = workingDirectory.path
+        }
+        if !options.environmentOverrides.isEmpty {
+            for (key, value) in options.environmentOverrides {
+                env[key] = value
+            }
         }
         proc.environment = env
 

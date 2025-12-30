@@ -75,22 +75,45 @@ struct ClaudeProviderImplementation: ProviderImplementation {
         {
             let strategy = await MainActor.run { Self.usageStrategy(settings: context.settings) }
 
+            func makeSnapshot(from usage: ClaudeUsageSnapshot) -> UsageSnapshot {
+                UsageSnapshot(
+                    primary: usage.primary,
+                    secondary: usage.secondary,
+                    tertiary: usage.opus,
+                    providerCost: usage.providerCost,
+                    updatedAt: usage.updatedAt,
+                    accountEmail: usage.accountEmail,
+                    accountOrganization: usage.accountOrganization,
+                    loginMethod: usage.loginMethod)
+            }
+
             let fetcher: any ClaudeUsageFetching = if context.claudeFetcher is ClaudeUsageFetcher {
                 ClaudeUsageFetcher(dataSource: strategy.dataSource, useWebExtras: strategy.useWebExtras)
             } else {
                 context.claudeFetcher
             }
 
-            let usage = try await fetcher.loadLatestUsage(model: "sonnet")
-            return UsageSnapshot(
-                primary: usage.primary,
-                secondary: usage.secondary,
-                tertiary: usage.opus,
-                providerCost: usage.providerCost,
-                updatedAt: usage.updatedAt,
-                accountEmail: usage.accountEmail,
-                accountOrganization: usage.accountOrganization,
-                loginMethod: usage.loginMethod)
+            do {
+                let usage = try await fetcher.loadLatestUsage(model: "sonnet")
+                return makeSnapshot(from: usage)
+            } catch {
+                if strategy.dataSource == .web, Self.shouldFallbackToCLI(on: error) {
+                    let fallbackFetcher = ClaudeUsageFetcher(dataSource: .cli)
+                    let usage = try await fallbackFetcher.loadLatestUsage(model: "sonnet")
+                    return makeSnapshot(from: usage)
+                }
+                throw error
+            }
+        }
+    }
+
+    private static func shouldFallbackToCLI(on error: Error) -> Bool {
+        guard let webError = error as? ClaudeWebAPIFetcher.FetchError else { return false }
+        switch webError {
+        case .unauthorized, .invalidSessionKey, .noSessionKeyFound:
+            return true
+        case .notSupportedOnThisPlatform, .networkError, .invalidResponse, .serverError, .noOrganization:
+            return false
         }
     }
 
