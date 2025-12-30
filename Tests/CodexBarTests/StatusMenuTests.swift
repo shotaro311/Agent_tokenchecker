@@ -6,9 +6,50 @@ import Testing
 @MainActor
 @Suite
 struct StatusMenuTests {
+    private static func settingsTitle(in descriptor: MenuDescriptor) -> String? {
+        for section in descriptor.sections {
+            for entry in section.entries {
+                if case let .action(title, .settings) = entry {
+                    return title
+                }
+            }
+        }
+        return nil
+    }
+
+    @Test
+    func localizesSettingsMenuItemWhenLanguageChanges() {
+        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore(), syncAppLanguageToSharedStore: false)
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+
+        let fetcher = UsageFetcher()
+        let store = UsageStore(fetcher: fetcher, settings: settings)
+        let account = fetcher.loadAccountInfo()
+
+        settings.appLanguage = .japanese
+        let japanese = MenuDescriptor.build(
+            provider: .codex,
+            store: store,
+            settings: settings,
+            account: account,
+            updateReady: false)
+        #expect(Self.settingsTitle(in: japanese) == "設定...")
+
+        settings.appLanguage = .english
+        let english = MenuDescriptor.build(
+            provider: .codex,
+            store: store,
+            settings: settings,
+            account: account,
+            updateReady: false)
+        #expect(Self.settingsTitle(in: english) == "Settings...")
+    }
+
     @Test
     func remembersProviderWhenMenuOpens() {
-        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore(), syncAppLanguageToSharedStore: false)
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
@@ -48,7 +89,7 @@ struct StatusMenuTests {
 
     @Test
     func hidesOpenAIWebSubmenusWhenNoHistory() {
-        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore(), syncAppLanguageToSharedStore: false)
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
@@ -92,7 +133,7 @@ struct StatusMenuTests {
 
     @Test
     func showsOpenAIWebSubmenusWhenHistoryExists() {
-        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore(), syncAppLanguageToSharedStore: false)
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
@@ -151,7 +192,7 @@ struct StatusMenuTests {
 
     @Test
     func showsCreditsBeforeCostInCodexMenuCardSections() {
-        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore(), syncAppLanguageToSharedStore: false)
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
@@ -216,7 +257,7 @@ struct StatusMenuTests {
 
     @Test
     func showsExtraUsageForClaudeWhenUsingMenuCardSections() {
-        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(zaiTokenStore: NoopZaiTokenStore(), syncAppLanguageToSharedStore: false)
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true

@@ -7,12 +7,53 @@ import Testing
 @Suite
 struct SettingsStoreTests {
     @Test
+    func defaultsAppLanguageToJapanese() {
+        let key = "appLanguage"
+        let suite = "SettingsStoreTests-language-default"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+
+        let store = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
+
+        #expect(store.appLanguage == .japanese)
+        #expect(defaults.string(forKey: key) == AppLanguage.japanese.rawValue)
+    }
+
+    @Test
+    func persistsAppLanguageAcrossInstances() {
+        let suite = "SettingsStoreTests-language-persist"
+        let defaultsA = UserDefaults(suiteName: suite)!
+        defaultsA.removePersistentDomain(forName: suite)
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
+
+        storeA.appLanguage = .english
+
+        let defaultsB = UserDefaults(suiteName: suite)!
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
+
+        #expect(storeB.appLanguage == .english)
+        #expect(defaultsB.string(forKey: "appLanguage") == AppLanguage.english.rawValue)
+    }
+
+    @Test
     func defaultRefreshFrequencyIsFiveMinutes() {
         let suite = "SettingsStoreTests-default"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
 
-        let store = SettingsStore(userDefaults: defaults, zaiTokenStore: NoopZaiTokenStore())
+        let store = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         #expect(store.refreshFrequency == .fiveMinutes)
         #expect(store.refreshFrequency.seconds == 300)
@@ -23,12 +64,18 @@ struct SettingsStoreTests {
         let suite = "SettingsStoreTests-persist"
         let defaultsA = UserDefaults(suiteName: suite)!
         defaultsA.removePersistentDomain(forName: suite)
-        let storeA = SettingsStore(userDefaults: defaultsA, zaiTokenStore: NoopZaiTokenStore())
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         storeA.refreshFrequency = .fifteenMinutes
 
         let defaultsB = UserDefaults(suiteName: suite)!
-        let storeB = SettingsStore(userDefaults: defaultsB, zaiTokenStore: NoopZaiTokenStore())
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         #expect(storeB.refreshFrequency == .fifteenMinutes)
         #expect(storeB.refreshFrequency.seconds == 900)
@@ -39,12 +86,18 @@ struct SettingsStoreTests {
         let suite = "SettingsStoreTests-selectedMenuProvider"
         let defaultsA = UserDefaults(suiteName: suite)!
         defaultsA.removePersistentDomain(forName: suite)
-        let storeA = SettingsStore(userDefaults: defaultsA, zaiTokenStore: NoopZaiTokenStore())
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         storeA.selectedMenuProvider = .claude
 
         let defaultsB = UserDefaults(suiteName: suite)!
-        let storeB = SettingsStore(userDefaults: defaultsB, zaiTokenStore: NoopZaiTokenStore())
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         #expect(storeB.selectedMenuProvider == .claude)
     }
@@ -55,7 +108,10 @@ struct SettingsStoreTests {
         let suite = "SettingsStoreTests-sessionQuotaNotifications"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
-        let store = SettingsStore(userDefaults: defaults, zaiTokenStore: NoopZaiTokenStore())
+        let store = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
         #expect(store.sessionQuotaNotificationsEnabled == true)
         #expect(defaults.bool(forKey: key) == true)
     }
@@ -66,7 +122,10 @@ struct SettingsStoreTests {
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
 
-        let store = SettingsStore(userDefaults: defaults, zaiTokenStore: NoopZaiTokenStore())
+        let store = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         #expect(store.claudeUsageDataSource == .web)
     }
@@ -78,7 +137,10 @@ struct SettingsStoreTests {
         defaults.removePersistentDomain(forName: suite)
         defaults.set(true, forKey: "providerDetectionCompleted")
 
-        let store = SettingsStore(userDefaults: defaults, zaiTokenStore: NoopZaiTokenStore())
+        let store = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         #expect(store.orderedProviders() == UsageProvider.allCases)
     }
@@ -93,7 +155,10 @@ struct SettingsStoreTests {
         // Partial list to mimic "older version" missing providers.
         defaultsA.set([UsageProvider.gemini.rawValue, UsageProvider.codex.rawValue], forKey: "providerOrder")
 
-        let storeA = SettingsStore(userDefaults: defaultsA, zaiTokenStore: NoopZaiTokenStore())
+        let storeA = SettingsStore(
+            userDefaults: defaultsA,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         #expect(storeA.orderedProviders() == [.gemini, .codex, .claude, .factory, .zai, .cursor, .antigravity])
 
@@ -103,7 +168,10 @@ struct SettingsStoreTests {
 
         let defaultsB = UserDefaults(suiteName: suite)!
         defaultsB.set(true, forKey: "providerDetectionCompleted")
-        let storeB = SettingsStore(userDefaults: defaultsB, zaiTokenStore: NoopZaiTokenStore())
+        let storeB = SettingsStore(
+            userDefaults: defaultsB,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
 
         #expect(storeB.orderedProviders().first == .antigravity)
     }

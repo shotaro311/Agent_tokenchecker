@@ -55,7 +55,9 @@ final class SettingsStore {
     var appLanguage: AppLanguage {
         didSet {
             self.userDefaults.set(self.appLanguage.rawValue, forKey: "appLanguage")
-            AppLanguageStore.save(self.appLanguage)
+            if self.syncAppLanguageToSharedStore {
+                AppLanguageStore.save(self.appLanguage)
+            }
         }
     }
 
@@ -207,14 +209,20 @@ final class SettingsStore {
     }
 
     @ObservationIgnored private let userDefaults: UserDefaults
+    @ObservationIgnored private let syncAppLanguageToSharedStore: Bool
     @ObservationIgnored private let toggleStore: ProviderToggleStore
     @ObservationIgnored private let zaiTokenStore: any ZaiTokenStoring
     @ObservationIgnored private var zaiTokenPersistTask: Task<Void, Never>?
     private var providerToggleRevision: Int = 0
 
-    init(userDefaults: UserDefaults = .standard, zaiTokenStore: any ZaiTokenStoring = KeychainZaiTokenStore()) {
+    init(
+        userDefaults: UserDefaults = .standard,
+        zaiTokenStore: any ZaiTokenStoring = KeychainZaiTokenStore(),
+        syncAppLanguageToSharedStore: Bool = true)
+    {
         self.userDefaults = userDefaults
         self.zaiTokenStore = zaiTokenStore
+        self.syncAppLanguageToSharedStore = syncAppLanguageToSharedStore
         self.providerOrderRaw = userDefaults.stringArray(forKey: "providerOrder") ?? []
         let raw = userDefaults.string(forKey: "refreshFrequency") ?? RefreshFrequency.fiveMinutes.rawValue
         self.refreshFrequency = RefreshFrequency(rawValue: raw) ?? .fiveMinutes
@@ -224,7 +232,9 @@ final class SettingsStore {
         if languageRaw == nil {
             self.userDefaults.set(resolvedLanguage.rawValue, forKey: "appLanguage")
         }
-        AppLanguageStore.save(resolvedLanguage)
+        if self.syncAppLanguageToSharedStore {
+            AppLanguageStore.save(resolvedLanguage)
+        }
         self.launchAtLogin = userDefaults.object(forKey: "launchAtLogin") as? Bool ?? false
         self.debugMenuEnabled = userDefaults.object(forKey: "debugMenuEnabled") as? Bool ?? false
         self.debugLoadingPatternRaw = userDefaults.string(forKey: "debugLoadingPattern")

@@ -153,7 +153,30 @@ if [[ "$ALLOW_LLDB" == "1" ]]; then
   CODESIGN_ID="-"
   CODESIGN_ARGS=(--force --sign "$CODESIGN_ID")
 else
-  CODESIGN_ID="${APP_IDENTITY:-Developer ID Application: Peter Steinberger (Y5PE65HELJ)}"
+  if [[ -n "${APP_IDENTITY:-}" ]]; then
+    CODESIGN_ID="${APP_IDENTITY}"
+  else
+    DEV_ID_IDENTITIES=()
+    while IFS= read -r identity; do
+      [[ -z "$identity" ]] && continue
+      DEV_ID_IDENTITIES+=("$identity")
+    done < <(
+      security find-identity -v -p codesigning "${HOME}/Library/Keychains/login.keychain-db" 2>/dev/null \
+        | sed -n 's/.*"\(Developer ID Application:.*\)".*/\1/p'
+    )
+    if [[ "${#DEV_ID_IDENTITIES[@]}" -eq 1 ]]; then
+      CODESIGN_ID="${DEV_ID_IDENTITIES[0]}"
+    elif [[ "${#DEV_ID_IDENTITIES[@]}" -eq 0 ]]; then
+      echo "ERROR: No 'Developer ID Application' signing identity found." >&2
+      echo "Install a Developer ID Application certificate, or set APP_IDENTITY explicitly." >&2
+      exit 1
+    else
+      echo "ERROR: Multiple 'Developer ID Application' signing identities found." >&2
+      echo "Set APP_IDENTITY to choose one:" >&2
+      printf '  %s\n' "${DEV_ID_IDENTITIES[@]}" >&2
+      exit 1
+    fi
+  fi
   CODESIGN_ARGS=(--force --timestamp --options runtime --sign "$CODESIGN_ID")
 fi
 function resign() { codesign "${CODESIGN_ARGS[@]}" "$1"; }
@@ -182,7 +205,13 @@ if [[ -d "$APP_RESOURCES_DIR" ]]; then
 fi
 
 # Strip extended attributes to prevent AppleDouble (._*) files that break code sealing
-xattr -cr "$APP"
+XATTR_BIN="/usr/bin/xattr"
+if [[ ! -x "$XATTR_BIN" ]]; then
+  XATTR_BIN="$(command -v xattr || true)"
+fi
+if [[ -n "$XATTR_BIN" ]]; then
+  "$XATTR_BIN" -cr "$APP"
+fi
 find "$APP" -name '._*' -delete
 
 # Sign widget extension if present
