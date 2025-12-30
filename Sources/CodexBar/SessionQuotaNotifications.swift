@@ -39,7 +39,7 @@ final class SessionQuotaNotifier {
         guard transition != .none else { return }
 
         let providerName = switch provider {
-        case .codex: "Codex"
+        case .codex, .codexOwner, .codexMember: "Codex"
         case .claude: "Claude"
         case .zai: "z.ai"
         case .gemini: "Gemini"

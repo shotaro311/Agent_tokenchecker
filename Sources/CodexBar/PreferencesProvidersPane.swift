@@ -124,7 +124,7 @@ struct ProvidersPane: View {
 
     private func providerSourceLabel(_ provider: UsageProvider) -> String {
         switch provider {
-        case .codex:
+        case .codex, .codexOwner, .codexMember:
             return self.l10n.choose("auto", "自動")
         case .claude:
             if self.settings.debugMenuEnabled {
@@ -350,7 +350,6 @@ private struct ProviderListProviderRowView: View {
 
     var body: some View {
         let l10n = AppLocalization(language: self.language)
-        let external = ExternalTextLocalizer(language: self.language)
         let titleIndent = ProviderListMetrics.iconSize + 8
         let isRefreshing = self.store.refreshingProviders.contains(self.provider)
 
@@ -365,7 +364,7 @@ private struct ProviderListProviderRowView: View {
                     HStack(spacing: 8) {
                         ProviderListBrandIcon(provider: self.provider)
                             .padding(.top, 1)
-                        Text(external.providerName(self.provider))
+                        Text(self.store.metadata(for: self.provider).displayName)
                             .font(.subheadline.bold())
                     }
                     Text(self.subtitle)
@@ -393,8 +392,8 @@ private struct ProviderListProviderRowView: View {
                 if let errorDisplay {
                     ProviderErrorView(
                         title: l10n.choose(
-                            "Last \(external.providerName(self.provider)) fetch failed:",
-                            "前回の\(external.providerName(self.provider))取得に失敗:"),
+                            "Last \(self.store.metadata(for: self.provider).displayName) fetch failed:",
+                            "前回の\(self.store.metadata(for: self.provider).displayName)取得に失敗:"),
                         language: self.language,
                         display: errorDisplay,
                         isExpanded: self.$isErrorExpanded,

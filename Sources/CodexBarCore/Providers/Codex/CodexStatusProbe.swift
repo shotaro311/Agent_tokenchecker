@@ -49,12 +49,18 @@ public enum CodexStatusProbeError: LocalizedError, Sendable {
 public struct CodexStatusProbe {
     public var codexBinary: String = "codex"
     public var timeout: TimeInterval = 18.0
+    public var environmentOverrides: [String: String] = [:]
 
     public init() {}
 
-    public init(codexBinary: String = "codex", timeout: TimeInterval = 18.0) {
+    public init(
+        codexBinary: String = "codex",
+        timeout: TimeInterval = 18.0,
+        environmentOverrides: [String: String] = [:])
+    {
         self.codexBinary = codexBinary
         self.timeout = timeout
+        self.environmentOverrides = environmentOverrides
     }
 
     public func fetch() async throws -> CodexStatusSnapshot {
@@ -114,6 +120,7 @@ public struct CodexStatusProbe {
                 rows: rows,
                 cols: cols,
                 timeout: timeout,
+                environmentOverrides: self.environmentOverrides,
                 extraArgs: ["-s", "read-only", "-a", "untrusted"]))
         return try Self.parse(text: result.text)
     }

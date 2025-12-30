@@ -563,7 +563,6 @@ extension UsageMenuCardView.Model {
 
     static func make(_ input: Input) -> UsageMenuCardView.Model {
         let l10n = AppLocalization(language: input.language)
-        let external = ExternalTextLocalizer(language: input.language)
         let email = Self.email(
             for: input.provider,
             snapshot: input.snapshot,
@@ -611,7 +610,7 @@ extension UsageMenuCardView.Model {
             : nil
 
         return UsageMenuCardView.Model(
-            providerName: external.providerName(input.provider),
+            providerName: input.metadata.displayName,
             email: email,
             subtitleText: subtitle.text,
             subtitleStyle: subtitle.style,
@@ -637,6 +636,8 @@ extension UsageMenuCardView.Model {
         case .codex:
             if let email = snapshot?.accountEmail, !email.isEmpty { return email }
             if let email = account.email, !email.isEmpty { return email }
+        case .codexOwner, .codexMember:
+            if let email = snapshot?.accountEmail, !email.isEmpty { return email }
         case .claude, .zai, .gemini, .antigravity, .cursor, .factory:
             if let email = snapshot?.accountEmail, !email.isEmpty { return email }
         }
@@ -653,6 +654,8 @@ extension UsageMenuCardView.Model {
         case .codex:
             if let plan = snapshot?.loginMethod, !plan.isEmpty { return self.planDisplay(plan, language: language) }
             if let plan = account.plan, !plan.isEmpty { return Self.planDisplay(plan, language: language) }
+        case .codexOwner, .codexMember:
+            if let plan = snapshot?.loginMethod, !plan.isEmpty { return self.planDisplay(plan, language: language) }
         case .claude, .zai, .gemini, .antigravity, .cursor, .factory:
             if let plan = snapshot?.loginMethod, !plan.isEmpty { return self.planDisplay(plan, language: language) }
         }
@@ -863,7 +866,7 @@ extension UsageMenuCardView.Model {
 
     private static func progressColor(for provider: UsageProvider) -> Color {
         switch provider {
-        case .codex:
+        case .codex, .codexOwner, .codexMember:
             Color(red: 73 / 255, green: 163 / 255, blue: 176 / 255)
         case .claude:
             Color(red: 204 / 255, green: 124 / 255, blue: 94 / 255)

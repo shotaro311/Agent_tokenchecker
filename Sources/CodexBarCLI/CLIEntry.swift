@@ -237,7 +237,7 @@ enum CodexBarCLI {
 
     private static func detectVersion(for provider: UsageProvider) -> String? {
         switch provider {
-        case .codex:
+        case .codex, .codexOwner, .codexMember:
             VersionDetector.codexVersion()
         case .claude:
             ClaudeUsageFetcher().detectVersion()
@@ -256,7 +256,7 @@ enum CodexBarCLI {
 
     private static func formatVersion(provider: UsageProvider, raw: String?) -> (version: String?, source: String) {
         let source = switch provider {
-        case .codex: "codex-cli"
+        case .codex, .codexOwner, .codexMember: "codex-cli"
         case .claude: "claude"
         case .zai: "zai"
         case .gemini: "gemini-cli"
@@ -466,7 +466,7 @@ enum CodexBarCLI {
     {
         do {
             switch provider {
-            case .codex:
+            case .codex, .codexOwner, .codexMember:
                 let usage = try await fetcher.loadLatestUsage()
                 let credits = includeCredits ? try? await fetcher.loadLatestCredits() : nil
                 return .success((usage, credits))
@@ -938,7 +938,7 @@ enum ProviderSelection: Sendable, ExpressibleFromArgument {
 
     init(provider: UsageProvider) {
         switch provider {
-        case .codex: self = .codex
+        case .codex, .codexOwner, .codexMember: self = .codex
         case .claude: self = .claude
         case .zai: self = .zai
         case .gemini: self = .gemini

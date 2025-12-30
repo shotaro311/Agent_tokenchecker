@@ -37,7 +37,7 @@ enum ProviderBrandIcon {
 
     private static func resourceName(for provider: UsageProvider) -> String {
         switch provider {
-        case .codex: "ProviderIcon-codex"
+        case .codex, .codexOwner, .codexMember: "ProviderIcon-codex"
         case .claude: "ProviderIcon-claude"
         case .zai: "ProviderIcon-zai"
         case .cursor: "ProviderIcon-cursor"

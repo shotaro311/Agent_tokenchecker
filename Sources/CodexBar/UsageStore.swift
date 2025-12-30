@@ -268,7 +268,7 @@ final class UsageStore {
 
     func version(for provider: UsageProvider) -> String? {
         switch provider {
-        case .codex: self.codexVersion
+        case .codex, .codexOwner, .codexMember: self.codexVersion
         case .claude: self.claudeVersion
         case .zai: self.zaiVersion
         case .gemini: self.geminiVersion
@@ -312,12 +312,7 @@ final class UsageStore {
     }
 
     var isStale: Bool {
-        (self.isEnabled(.codex) && self.lastCodexError != nil) ||
-            (self.isEnabled(.claude) && self.lastClaudeError != nil) ||
-            (self.isEnabled(.zai) && self.errors[.zai] != nil) ||
-            (self.isEnabled(.gemini) && self.errors[.gemini] != nil) ||
-            (self.isEnabled(.antigravity) && self.errors[.antigravity] != nil) ||
-            (self.isEnabled(.cursor) && self.errors[.cursor] != nil)
+        self.enabledProviders().contains { self.errors[$0] != nil }
     }
 
     func enabledProviders() -> [UsageProvider] {
@@ -329,7 +324,26 @@ final class UsageStore {
     }
 
     func metadata(for provider: UsageProvider) -> ProviderMetadata {
-        self.providerMetadata[provider]!
+        let base = self.providerMetadata[provider]!
+        let displayName = self.settings.codexDisplayNameResolved(for: provider, fallback: base.displayName)
+        guard displayName != base.displayName else { return base }
+        return ProviderMetadata(
+            id: base.id,
+            displayName: displayName,
+            sessionLabel: base.sessionLabel,
+            weeklyLabel: base.weeklyLabel,
+            opusLabel: base.opusLabel,
+            supportsOpus: base.supportsOpus,
+            supportsCredits: base.supportsCredits,
+            creditsHint: base.creditsHint,
+            toggleTitle: base.toggleTitle,
+            cliName: base.cliName,
+            defaultEnabled: base.defaultEnabled,
+            dashboardURL: base.dashboardURL,
+            subscriptionDashboardURL: base.subscriptionDashboardURL,
+            statusPageURL: base.statusPageURL,
+            statusLinkURL: base.statusLinkURL,
+            statusWorkspaceProductID: base.statusWorkspaceProductID)
     }
 
     func snapshot(for provider: UsageProvider) -> UsageSnapshot? {
@@ -1044,9 +1058,11 @@ extension UsageStore {
         let claudeDebugMenuEnabled = self.settings.debugMenuEnabled
         return await Task.detached(priority: .utility) { () -> String in
             switch provider {
-            case .codex:
-                let raw = await self.codexFetcher.debugRawRateLimits()
-                await MainActor.run { self.probeLogs[.codex] = raw }
+            case .codex, .codexOwner, .codexMember:
+                let env = await MainActor.run { self.settings.codexEnvironment(for: provider) }
+                let fetcher = UsageFetcher(environment: env)
+                let raw = await fetcher.debugRawRateLimits()
+                await MainActor.run { self.probeLogs[provider] = raw }
                 return raw
             case .claude:
                 let text = await self.runWithTimeout(seconds: 15) {

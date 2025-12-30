@@ -63,6 +63,16 @@ struct MenuDescriptor {
                 account: account,
                 preferClaude: false,
                 language: language))
+        case .codexOwner?:
+            sections.append(Self.usageSection(for: .codexOwner, store: store, settings: settings, language: language))
+            sections.append(Self.accountSectionForSnapshot(store.snapshot(for: .codexOwner), language: language))
+        case .codexMember?:
+            sections.append(Self.usageSection(
+                for: .codexMember,
+                store: store,
+                settings: settings,
+                language: language))
+            sections.append(Self.accountSectionForSnapshot(store.snapshot(for: .codexMember), language: language))
         case .claude?:
             sections.append(Self.usageSection(for: .claude, store: store, settings: settings, language: language))
             sections.append(Self.accountSection(
@@ -136,7 +146,7 @@ struct MenuDescriptor {
         let meta = store.metadata(for: provider)
         var entries: [Entry] = []
         let headlineText: String = {
-            let name = external.providerName(provider)
+            let name = meta.displayName
             if let ver = Self.versionNumber(for: provider, store: store) { return "\(name) \(ver)" }
             return name
         }()

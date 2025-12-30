@@ -15,7 +15,7 @@ public struct ExternalTextLocalizer {
 
     public func providerShortName(_ provider: UsageProvider) -> String {
         switch provider {
-        case .codex:
+        case .codex, .codexOwner, .codexMember:
             "Codex"
         case .claude:
             "Claude"

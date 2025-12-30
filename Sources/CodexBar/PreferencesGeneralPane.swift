@@ -133,20 +133,8 @@ struct GeneralPane: View {
         let l10n = AppLocalization(language: self.settings.appLanguage)
         let external = ExternalTextLocalizer(language: self.settings.appLanguage)
         let name = switch provider {
-        case .claude:
-            external.providerName(.claude)
-        case .codex:
-            external.providerName(.codex)
-        case .zai:
-            external.providerName(.zai)
-        case .gemini:
-            external.providerName(.gemini)
-        case .antigravity:
-            external.providerName(.antigravity)
-        case .cursor:
-            external.providerName(.cursor)
-        case .factory:
-            external.providerName(.factory)
+        case .codex, .codexOwner, .codexMember, .claude, .zai, .gemini, .antigravity, .cursor, .factory:
+            self.store.metadata(for: provider).displayName
         }
         guard provider == .claude || provider == .codex else {
             return Text(l10n.choose("\(name): unsupported", "\(name): 未対応"))

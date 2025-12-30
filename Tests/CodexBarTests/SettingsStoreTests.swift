@@ -160,7 +160,17 @@ struct SettingsStoreTests {
             zaiTokenStore: NoopZaiTokenStore(),
             syncAppLanguageToSharedStore: false)
 
-        #expect(storeA.orderedProviders() == [.gemini, .codex, .claude, .factory, .zai, .cursor, .antigravity])
+        #expect(storeA.orderedProviders() == [
+            .gemini,
+            .codex,
+            .codexOwner,
+            .codexMember,
+            .claude,
+            .factory,
+            .zai,
+            .cursor,
+            .antigravity,
+        ])
 
         // Move one provider; ensure it's persisted across instances.
         let antigravityIndex = storeA.orderedProviders().firstIndex(of: .antigravity)!

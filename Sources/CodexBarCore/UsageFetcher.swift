@@ -182,6 +182,7 @@ private enum RPCWireError: Error, CustomStringConvertible {
     case startFailed(String)
     case requestFailed(String)
     case malformed(String)
+    case timedOut(String)
 
     var description: String {
         switch self {
@@ -191,6 +192,8 @@ private enum RPCWireError: Error, CustomStringConvertible {
             "RPC request failed: \(message)"
         case let .malformed(message):
             "Malformed response: \(message)"
+        case let .timedOut(message):
+            "RPC request timed out: \(message)"
         }
     }
 }
@@ -204,6 +207,7 @@ private final class CodexRPCClient: @unchecked Sendable {
     private let stdoutLineStream: AsyncStream<Data>
     private let stdoutLineContinuation: AsyncStream<Data>.Continuation
     private var nextID = 1
+    private static let requestTimeout: TimeInterval = 12.0
 
     private final class LineBuffer: @unchecked Sendable {
         private let lock = NSLock()
@@ -233,6 +237,7 @@ private final class CodexRPCClient: @unchecked Sendable {
     }
 
     init(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
         executable: String = "codex",
         arguments: [String] = ["-s", "read-only", "-a", "untrusted", "app-server"]) throws
     {
@@ -249,7 +254,7 @@ private final class CodexRPCClient: @unchecked Sendable {
             throw RPCWireError.startFailed(
                 "Codex CLI not found. Install with `npm i -g @openai/codex` (or bun) then relaunch CodexBar.")
         }
-        var env = ProcessInfo.processInfo.environment
+        var env = environment
         env["PATH"] = PathBuilder.effectivePATH(
             purposes: [.rpc, .nodeTooling],
             env: env)
@@ -331,8 +336,15 @@ private final class CodexRPCClient: @unchecked Sendable {
         self.nextID += 1
         try self.sendRequest(id: id, method: method, params: params)
 
+        let deadline = Date().addingTimeInterval(Self.requestTimeout)
         while true {
-            let message = try await self.readNextMessage()
+            let remaining = max(0.0, deadline.timeIntervalSinceNow)
+            let lineData = try await self.readNextLine(timeout: remaining)
+            if lineData.isEmpty { continue }
+
+            guard let message = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any] else {
+                continue
+            }
 
             if message["id"] == nil, let methodName = message["method"] as? String {
                 Self.debugWriteStderr("[codex notify] \(methodName)\n")
@@ -366,14 +378,40 @@ private final class CodexRPCClient: @unchecked Sendable {
         self.stdinPipe.fileHandleForWriting.write(Data([0x0A]))
     }
 
-    private func readNextMessage() async throws -> [String: Any] {
+    private func readNextLine(timeout: TimeInterval) async throws -> Data {
+        let clampedSeconds = max(0.0, min(timeout, 120.0))
+        let nanos = UInt64(clampedSeconds * 1_000_000_000)
+
+        let data = await withTaskGroup(of: Data?.self) { group in
+            group.addTask { await self.readNextLine() }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: nanos)
+                return nil
+            }
+            let data: Data? = if let next = await group.next() {
+                next
+            } else {
+                nil
+            }
+            if data == nil {
+                self.shutdown()
+            }
+            group.cancelAll()
+            return data
+        }
+
+        guard let data else {
+            throw RPCWireError.timedOut("read \(clampedSeconds)s")
+        }
+        return data
+    }
+
+    private func readNextLine() async -> Data? {
         for await lineData in self.stdoutLineStream {
             if lineData.isEmpty { continue }
-            if let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any] {
-                return json
-            }
+            return lineData
         }
-        throw RPCWireError.malformed("codex app-server closed stdout")
+        return nil
     }
 
     private func decodeResult<T: Decodable>(from message: [String: Any]) throws -> T {
@@ -408,11 +446,12 @@ public struct UsageFetcher: Sendable {
     }
 
     public func loadLatestUsage() async throws -> UsageSnapshot {
-        try await self.withFallback(primary: self.loadRPCUsage, secondary: self.loadTTYUsage)
+        await self.ensureLoginShellPathCaptured()
+        return try await self.withFallback(primary: self.loadRPCUsage, secondary: self.loadTTYUsage)
     }
 
     private func loadRPCUsage() async throws -> UsageSnapshot {
-        let rpc = try CodexRPCClient()
+        let rpc = try CodexRPCClient(environment: self.environment)
         defer { rpc.shutdown() }
 
         try await rpc.initialize(clientName: "codexbar", clientVersion: "0.5.4")
@@ -443,7 +482,8 @@ public struct UsageFetcher: Sendable {
     }
 
     private func loadTTYUsage() async throws -> UsageSnapshot {
-        let status = try await CodexStatusProbe().fetch()
+        let overrides = Self.codexEnvironmentOverrides(from: self.environment)
+        let status = try await CodexStatusProbe(environmentOverrides: overrides).fetch()
         guard let fiveLeft = status.fiveHourPercentLeft, let weekLeft = status.weeklyPercentLeft else {
             throw UsageError.noRateLimitsFound
         }
@@ -470,11 +510,12 @@ public struct UsageFetcher: Sendable {
     }
 
     public func loadLatestCredits() async throws -> CreditsSnapshot {
-        try await self.withFallback(primary: self.loadRPCCredits, secondary: self.loadTTYCredits)
+        await self.ensureLoginShellPathCaptured()
+        return try await self.withFallback(primary: self.loadRPCCredits, secondary: self.loadTTYCredits)
     }
 
     private func loadRPCCredits() async throws -> CreditsSnapshot {
-        let rpc = try CodexRPCClient()
+        let rpc = try CodexRPCClient(environment: self.environment)
         defer { rpc.shutdown() }
         try await rpc.initialize(clientName: "codexbar", clientVersion: "0.5.4")
         let limits = try await rpc.fetchRateLimits().rateLimits
@@ -484,7 +525,8 @@ public struct UsageFetcher: Sendable {
     }
 
     private func loadTTYCredits() async throws -> CreditsSnapshot {
-        let status = try await CodexStatusProbe().fetch()
+        let overrides = Self.codexEnvironmentOverrides(from: self.environment)
+        let status = try await CodexStatusProbe(environmentOverrides: overrides).fetch()
         guard let credits = status.credits else { throw UsageError.noRateLimitsFound }
         return CreditsSnapshot(remaining: credits, events: [], updatedAt: Date())
     }
@@ -506,8 +548,9 @@ public struct UsageFetcher: Sendable {
     }
 
     public func debugRawRateLimits() async -> String {
+        await self.ensureLoginShellPathCaptured()
         do {
-            let rpc = try CodexRPCClient()
+            let rpc = try CodexRPCClient(environment: self.environment)
             defer { rpc.shutdown() }
             try await rpc.initialize(clientName: "codexbar", clientVersion: "0.5.4")
             let limits = try await rpc.fetchRateLimits()
@@ -558,6 +601,15 @@ public struct UsageFetcher: Sendable {
             resetDescription: resetDescription)
     }
 
+    private func ensureLoginShellPathCaptured(timeout: TimeInterval = 2.0) async {
+        if LoginShellPathCache.shared.current != nil { return }
+        await withCheckedContinuation { continuation in
+            LoginShellPathCache.shared.captureOnce(timeout: timeout) { _ in
+                continuation.resume()
+            }
+        }
+    }
+
     private static func parseCredits(_ balance: String?) -> Double {
         guard let balance, let val = Double(balance) else { return 0 }
         return val
@@ -577,6 +629,13 @@ public struct UsageFetcher: Sendable {
         guard let data = Data(base64Encoded: padded) else { return nil }
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
         return json
+    }
+
+    private static func codexEnvironmentOverrides(from env: [String: String]) -> [String: String] {
+        guard let raw = env["CODEX_HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return [:]
+        }
+        return ["CODEX_HOME": raw]
     }
 }
 

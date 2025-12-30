@@ -235,6 +235,9 @@ extension StatusItemController {
             language: self.settings.appLanguage,
             width: self.menuCardWidth(for: providers, menu: menu),
             showsIcons: self.settings.switcherShowsIcons,
+            titleProvider: { [weak self] provider in
+                self?.store.metadata(for: provider).displayName ?? provider.rawValue
+            },
             iconProvider: { [weak self] provider in
                 self?.switcherIcon(for: provider) ?? NSImage()
             },
@@ -923,13 +926,14 @@ private final class ProviderSwitcherView: NSView {
         language: AppLanguage,
         width: CGFloat,
         showsIcons: Bool,
+        titleProvider: (UsageProvider) -> String,
         iconProvider: (UsageProvider) -> NSImage,
         weeklyRemainingProvider: @escaping (UsageProvider) -> Double?,
         onSelect: @escaping (UsageProvider) -> Void)
     {
         self.language = language
         self.segments = providers.map { provider in
-            let fullTitle = ExternalTextLocalizer(language: language).providerName(provider)
+            let fullTitle = titleProvider(provider)
             let icon = iconProvider(provider)
             icon.isTemplate = true
             // Avoid any resampling: we ship exact 16pt/32px assets for crisp rendering.
@@ -1335,7 +1339,7 @@ private final class ProviderSwitcherView: NSView {
 
     private static func weeklyIndicatorColor(for provider: UsageProvider) -> NSColor {
         switch provider {
-        case .codex:
+        case .codex, .codexOwner, .codexMember:
             NSColor(deviceRed: 73 / 255, green: 163 / 255, blue: 176 / 255, alpha: 1)
         case .claude:
             NSColor(deviceRed: 204 / 255, green: 124 / 255, blue: 94 / 255, alpha: 1)

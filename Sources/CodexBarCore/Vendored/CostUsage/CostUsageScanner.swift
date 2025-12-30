@@ -40,7 +40,7 @@ enum CostUsageScanner {
         let range = CostUsageDayRange(since: since, until: until)
 
         switch provider {
-        case .codex:
+        case .codex, .codexOwner, .codexMember:
             return self.loadCodexDaily(range: range, now: now, options: options)
         case .claude:
             return self.loadClaudeDaily(range: range, now: now, options: options)

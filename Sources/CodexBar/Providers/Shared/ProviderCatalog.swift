@@ -7,7 +7,9 @@ import CodexBarCore
 enum ProviderCatalog {
     /// All provider implementations shipped in the app.
     static let all: [any ProviderImplementation] = [
-        CodexProviderImplementation(),
+        CodexProviderImplementation(id: .codex),
+        CodexProviderImplementation(id: .codexOwner),
+        CodexProviderImplementation(id: .codexMember),
         ClaudeProviderImplementation(),
         ZaiProviderImplementation(),
         CursorProviderImplementation(),

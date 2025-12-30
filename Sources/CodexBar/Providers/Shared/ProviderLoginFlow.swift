@@ -7,8 +7,8 @@ extension StatusItemController {
     /// - Returns: Whether CodexBar should refresh after the flow completes.
     func runLoginFlow(provider: UsageProvider) async -> Bool {
         switch provider {
-        case .codex:
-            await self.runCodexLoginFlow()
+        case .codex, .codexOwner, .codexMember:
+            await self.runCodexLoginFlow(provider: provider)
             return true
         case .claude:
             await self.runClaudeLoginFlow()

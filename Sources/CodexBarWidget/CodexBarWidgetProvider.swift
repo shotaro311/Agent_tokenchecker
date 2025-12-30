@@ -33,6 +33,7 @@ enum ProviderChoice: String, AppEnum {
     init?(provider: UsageProvider) {
         switch provider {
         case .codex: self = .codex
+        case .codexOwner, .codexMember: return nil
         case .claude: self = .claude
         case .gemini: self = .gemini
         case .antigravity: self = .antigravity

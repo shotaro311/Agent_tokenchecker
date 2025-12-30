@@ -41,7 +41,7 @@ extension UsageStore {
         let home = fm.homeDirectoryForCurrentUser.path
 
         switch provider {
-        case .codex:
+        case .codex, .codexOwner, .codexMember:
             let root = ProcessInfo.processInfo.environment["CODEX_HOME"].flatMap { raw -> String? in
                 let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !trimmed.isEmpty else { return nil }

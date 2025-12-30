@@ -239,7 +239,7 @@ extension StatusItemController {
 
     func postLoginNotification(for provider: UsageProvider) {
         let title = switch provider {
-        case .codex: "Codex login successful"
+        case .codex, .codexOwner, .codexMember: "Codex login successful"
         case .claude: "Claude login successful"
         case .zai: "z.ai login successful"
         case .gemini: "Gemini login successful"

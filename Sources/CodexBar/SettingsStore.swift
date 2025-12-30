@@ -108,6 +108,32 @@ final class SettingsStore {
         didSet { self.userDefaults.set(self.randomBlinkEnabled, forKey: "randomBlinkEnabled") }
     }
 
+    // MARK: - Codex multi-account (display name + CODEX_HOME)
+
+    var codexDisplayName: String {
+        didSet { self.userDefaults.set(self.codexDisplayName, forKey: "codexDisplayName") }
+    }
+
+    var codexHomePath: String {
+        didSet { self.userDefaults.set(self.codexHomePath, forKey: "codexHomePath") }
+    }
+
+    var codexOwnerDisplayName: String {
+        didSet { self.userDefaults.set(self.codexOwnerDisplayName, forKey: "codexOwnerDisplayName") }
+    }
+
+    var codexOwnerHomePath: String {
+        didSet { self.userDefaults.set(self.codexOwnerHomePath, forKey: "codexOwnerHomePath") }
+    }
+
+    var codexMemberDisplayName: String {
+        didSet { self.userDefaults.set(self.codexMemberDisplayName, forKey: "codexMemberDisplayName") }
+    }
+
+    var codexMemberHomePath: String {
+        didSet { self.userDefaults.set(self.codexMemberHomePath, forKey: "codexMemberHomePath") }
+    }
+
     /// Optional: augment Claude usage with claude.ai web API (via Safari/Chrome/Firefox cookies),
     /// incl. "Extra usage" spend.
     var claudeWebExtrasEnabled: Bool {
@@ -192,6 +218,12 @@ final class SettingsStore {
         _ = self.usageBarsShowUsed
         _ = self.ccusageCostUsageEnabled
         _ = self.randomBlinkEnabled
+        _ = self.codexDisplayName
+        _ = self.codexHomePath
+        _ = self.codexOwnerDisplayName
+        _ = self.codexOwnerHomePath
+        _ = self.codexMemberDisplayName
+        _ = self.codexMemberHomePath
         _ = self.claudeWebExtrasEnabled
         _ = self.showOptionalCreditsAndExtraUsage
         _ = self.claudeUsageDataSource
@@ -248,6 +280,36 @@ final class SettingsStore {
         self.usageBarsShowUsed = userDefaults.object(forKey: "usageBarsShowUsed") as? Bool ?? false
         self.ccusageCostUsageEnabled = userDefaults.object(forKey: "tokenCostUsageEnabled") as? Bool ?? false
         self.randomBlinkEnabled = userDefaults.object(forKey: "randomBlinkEnabled") as? Bool ?? false
+        let codexDisplayName = userDefaults.string(forKey: "codexDisplayName") ?? "Codex"
+        self.codexDisplayName = codexDisplayName
+        if userDefaults.string(forKey: "codexDisplayName") == nil {
+            userDefaults.set(codexDisplayName, forKey: "codexDisplayName")
+        }
+        let codexHomePath = userDefaults.string(forKey: "codexHomePath") ?? "~/.codex"
+        self.codexHomePath = codexHomePath
+        if userDefaults.string(forKey: "codexHomePath") == nil {
+            userDefaults.set(codexHomePath, forKey: "codexHomePath")
+        }
+        let codexOwnerDisplayName = userDefaults.string(forKey: "codexOwnerDisplayName") ?? "Codex (Owner)"
+        self.codexOwnerDisplayName = codexOwnerDisplayName
+        if userDefaults.string(forKey: "codexOwnerDisplayName") == nil {
+            userDefaults.set(codexOwnerDisplayName, forKey: "codexOwnerDisplayName")
+        }
+        let codexOwnerHomePath = userDefaults.string(forKey: "codexOwnerHomePath") ?? "~/.codex-owner"
+        self.codexOwnerHomePath = codexOwnerHomePath
+        if userDefaults.string(forKey: "codexOwnerHomePath") == nil {
+            userDefaults.set(codexOwnerHomePath, forKey: "codexOwnerHomePath")
+        }
+        let codexMemberDisplayName = userDefaults.string(forKey: "codexMemberDisplayName") ?? "Codex (Member)"
+        self.codexMemberDisplayName = codexMemberDisplayName
+        if userDefaults.string(forKey: "codexMemberDisplayName") == nil {
+            userDefaults.set(codexMemberDisplayName, forKey: "codexMemberDisplayName")
+        }
+        let codexMemberHomePath = userDefaults.string(forKey: "codexMemberHomePath") ?? "~/.codex-member"
+        self.codexMemberHomePath = codexMemberHomePath
+        if userDefaults.string(forKey: "codexMemberHomePath") == nil {
+            userDefaults.set(codexMemberHomePath, forKey: "codexMemberHomePath")
+        }
         self.claudeWebExtrasEnabled = userDefaults.object(forKey: "claudeWebExtrasEnabled") as? Bool ?? false
         let creditsExtrasDefault = userDefaults.object(forKey: "showOptionalCreditsAndExtraUsage") as? Bool
         self.showOptionalCreditsAndExtraUsage = creditsExtrasDefault ?? true
@@ -467,6 +529,120 @@ final class SettingsStore {
                 CodexBarLog.logger("zai-token-store").error("Failed to persist z.ai token: \(error)")
             }
         }
+    }
+}
+
+// MARK: - Codex multi-account helpers
+
+extension SettingsStore {
+    func codexDisplayNameResolved(for provider: UsageProvider, fallback: String) -> String {
+        let trimmed: String? = switch provider {
+        case .codex:
+            self.codexDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        case .codexOwner:
+            self.codexOwnerDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        case .codexMember:
+            self.codexMemberDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        case .claude, .factory, .zai, .cursor, .gemini, .antigravity:
+            nil
+        }
+
+        guard let trimmed, !trimmed.isEmpty else { return fallback }
+        return trimmed
+    }
+
+    func codexEnvironment(for provider: UsageProvider) -> [String: String] {
+        var env = ProcessInfo.processInfo.environment
+        guard let home = self.codexHomePathResolved(for: provider) else { return env }
+        env["CODEX_HOME"] = home
+        return env
+    }
+
+    func resetCodexDisplayName(for provider: UsageProvider) {
+        switch provider {
+        case .codex:
+            self.codexDisplayName = Self.defaultCodexDisplayName(for: provider)
+        case .codexOwner:
+            self.codexOwnerDisplayName = Self.defaultCodexDisplayName(for: provider)
+        case .codexMember:
+            self.codexMemberDisplayName = Self.defaultCodexDisplayName(for: provider)
+        case .claude, .factory, .zai, .cursor, .gemini, .antigravity:
+            return
+        }
+    }
+
+    func resetCodexHomePath(for provider: UsageProvider) {
+        switch provider {
+        case .codex:
+            self.codexHomePath = Self.defaultCodexHomePath(for: provider)
+        case .codexOwner:
+            self.codexOwnerHomePath = Self.defaultCodexHomePath(for: provider)
+        case .codexMember:
+            self.codexMemberHomePath = Self.defaultCodexHomePath(for: provider)
+        case .claude, .factory, .zai, .cursor, .gemini, .antigravity:
+            return
+        }
+    }
+
+    // MARK: - Private
+
+    private func codexHomePathResolved(for provider: UsageProvider) -> String? {
+        let raw: String? = switch provider {
+        case .codex:
+            self.codexHomePath
+        case .codexOwner:
+            self.codexOwnerHomePath
+        case .codexMember:
+            self.codexMemberHomePath
+        case .claude, .factory, .zai, .cursor, .gemini, .antigravity:
+            nil
+        }
+
+        guard let raw else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let fallback = Self.defaultCodexHomePath(for: provider)
+        let expanded = Self.expandedHomePath(trimmed.isEmpty ? fallback : trimmed)
+        return expanded.isEmpty ? nil : expanded
+    }
+
+    private static func defaultCodexDisplayName(for provider: UsageProvider) -> String {
+        switch provider {
+        case .codex:
+            "Codex"
+        case .codexOwner:
+            "Codex (Owner)"
+        case .codexMember:
+            "Codex (Member)"
+        case .claude:
+            "Claude"
+        case .factory:
+            "Droid"
+        case .zai:
+            "z.ai"
+        case .cursor:
+            "Cursor"
+        case .gemini:
+            "Gemini"
+        case .antigravity:
+            "Antigravity"
+        }
+    }
+
+    private static func defaultCodexHomePath(for provider: UsageProvider) -> String {
+        switch provider {
+        case .codex:
+            "~/.codex"
+        case .codexOwner:
+            "~/.codex-owner"
+        case .codexMember:
+            "~/.codex-member"
+        case .claude, .factory, .zai, .cursor, .gemini, .antigravity:
+            "~/.codex"
+        }
+    }
+
+    private static func expandedHomePath(_ raw: String) -> String {
+        (raw as NSString).expandingTildeInPath
     }
 }
 

@@ -2,6 +2,8 @@ import Foundation
 
 public enum UsageProvider: String, CaseIterable, Sendable, Codable {
     case codex
+    case codexOwner = "codex-owner"
+    case codexMember = "codex-member"
     case claude
     case factory
     case zai
@@ -82,6 +84,34 @@ public enum ProviderDefaults {
             toggleTitle: "Show Codex usage",
             cliName: "codex",
             defaultEnabled: true,
+            dashboardURL: "https://chatgpt.com/codex/settings/usage",
+            statusPageURL: "https://status.openai.com/"),
+        .codexOwner: ProviderMetadata(
+            id: .codexOwner,
+            displayName: "Codex (Owner)",
+            sessionLabel: "Session",
+            weeklyLabel: "Weekly",
+            opusLabel: nil,
+            supportsOpus: false,
+            supportsCredits: true,
+            creditsHint: "Credits unavailable; keep Codex running to refresh.",
+            toggleTitle: "Show Codex usage (owner)",
+            cliName: "codex-owner",
+            defaultEnabled: false,
+            dashboardURL: "https://chatgpt.com/codex/settings/usage",
+            statusPageURL: "https://status.openai.com/"),
+        .codexMember: ProviderMetadata(
+            id: .codexMember,
+            displayName: "Codex (Member)",
+            sessionLabel: "Session",
+            weeklyLabel: "Weekly",
+            opusLabel: nil,
+            supportsOpus: false,
+            supportsCredits: true,
+            creditsHint: "Credits unavailable; keep Codex running to refresh.",
+            toggleTitle: "Show Codex usage (member)",
+            cliName: "codex-member",
+            defaultEnabled: false,
             dashboardURL: "https://chatgpt.com/codex/settings/usage",
             statusPageURL: "https://status.openai.com/"),
         .claude: ProviderMetadata(

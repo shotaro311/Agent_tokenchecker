@@ -710,7 +710,7 @@ private struct UsageHistoryChart: View {
 enum WidgetColors {
     static func color(for provider: UsageProvider) -> Color {
         switch provider {
-        case .codex:
+        case .codex, .codexOwner, .codexMember:
             Color(red: 73 / 255, green: 163 / 255, blue: 176 / 255)
         case .claude:
             Color(red: 204 / 255, green: 124 / 255, blue: 94 / 255)
