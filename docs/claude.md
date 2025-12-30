@@ -1,94 +1,92 @@
 ---
-summary: "Claude Code support in CodexBar: PTY probing, parsing, and UX."
+summary: "CodexBarのClaude Code対応：PTYプローブ、解析、UX。"
 read_when:
-  - Debugging Claude usage/status parsing
-  - Adjusting Claude provider UI/menu behavior
-  - Updating Claude CLI detection paths or prompts
+  - Claude使用量/ステータスの解析をデバッグするとき
+  - ClaudeプロバイダのUI/メニュー挙動を調整するとき
+  - Claude CLI検出パスやプロンプト対応を更新するとき
 ---
 
-# Claude Code support (CodexBar)
+# Claude Code対応（CodexBar）
 
-Claude Code support is implemented: CodexBar can show Claude alongside Codex (one status item per provider) and keeps provider identity fields siloed (no Claude org/plan leaking into Codex, and vice versa).
+Claude Code対応は実装済みです。CodexBarはCodexとClaudeを並べて表示でき（プロバイダごとに1ステータス項目）、識別情報は分離されます（CodexにClaudeの組織/プランが混ざることはありません）。
 
 ## UX
-- On launch we detect CLIs:
+- 起動時にCLIを検出:
   - Codex: `codex --version`
   - Claude Code: `claude --version`
-- Settings → General: toggles for “Show Codex usage” and “Show Claude Code usage” (Claude defaults on when detected).
-- Menu: each enabled provider gets its own status item/menu card.
+- 設定 → 一般: 「Codexの使用量を表示」「Claude Codeの使用量を表示」のトグル（Claudeは検出時に既定で有効）。
+- メニュー: 有効な各プロバイダに専用のステータス項目/メニューカードが表示されます。
 
-### Claude menu-bar icon (crab notch homage)
-- Same two-bar metaphor; template switches to the Claude “crab” style while keeping the same bar mapping.
+### Claudeのメニューバーアイコン（カニのノッチ風）
+- 2本バーのメタファは共通で、テンプレートがClaudeの“カニ”スタイルに切り替わります。
 
-## Data path (Claude)
+## データ経路（Claude）
 
-### Web API (default)
-- Uses your browser session cookies (Safari → Chrome → Firefox) to call the claude.ai API.
-- Provides session + weekly usage, Opus weekly usage when present, Extra usage cost, and account metadata.
-- If no Claude web cookies are found, CodexBar falls back to the CLI probe.
+### Web API（既定）
+- ブラウザセッションCookie（Safari → Chrome → Firefox）を使って claude.ai API を呼び出します。
+- セッション + 週間使用量、Opusの週間（存在時）、Extra usageのコスト、アカウントメタデータを提供します。
+- Claude WebのCookieが無い場合はCLIプローブにフォールバックします。
 
-### CLI PTY fallback (no cookies)
-- We launch a single Claude CLI session inside a pseudo-TTY and keep it alive between refreshes to avoid warm-up churn.
-- Driver steps:
-  1) Boot loop waits for the TUI header and handles first-run prompts:
-     - “Do you trust the files in this folder” → send `1` + Enter
-     - “Select a workspace” → send Enter
-     - Telemetry `(y/n)` → send `n` + Enter
-     - Login prompts → abort with a nice error (“claude login”).
-  2) Send the `/usage` slash command directly (type `/usage`, press Enter once) so we land on the Usage tab.
-  3) Re-press Enter every ~1.5s (Claude sometimes drops the first one under load).
-  4) If still no usage after a few seconds, re-send `/usage` + Enter up to 3 times.
-  5) Stop as soon as the buffer contains both “Current session” and “Current week (all models)”.
-  6) Keep reading ~2s more so percent lines are captured cleanly, then exit.
-- Parsing:
-  - We strip ANSI codes, then look for percent lines within 4 lines of these headers:
+### CLI PTYフォールバック（Cookieなし）
+- 単一のClaude CLIセッションを擬似TTY内で起動し、更新間は維持してウォームアップの揺らぎを避けます。
+- ドライバ手順:
+  1) TUIヘッダを待ち、初回プロンプトを処理:
+     - 「Do you trust the files in this folder」→ `1` + Enter
+     - 「Select a workspace」→ Enter
+     - テレメトリー `(y/n)` → `n` + Enter
+     - ログインプロンプト → きれいなエラーで中断（「claude login」）
+  2) `/usage` スラッシュコマンドを直接送信（`/usage` を入力しEnter）。
+  3) 約1.5秒ごとにEnterを再送（負荷時に最初のEnterが落ちることがあるため）。
+  4) 数秒経っても使用量が出ない場合、`/usage` + Enterを最大3回まで再送。
+  5) バッファに「Current session」と「Current week (all models)」が両方出たら停止。
+  6) さらに約2秒読み取り、割合行を確実に取得して終了。
+- 解析:
+  - ANSIコードを除去し、次のヘッダの前後4行以内で割合行を探す:
     - `Current session`
     - `Current week (all models)`
-    - `Current week (Sonnet only)` (optional)
-  - `X% used` is converted to `% left = 100 - X`; `X% left` is used as-is.
-  - If the CLI surfaces `Failed to load usage data` with a JSON blob (e.g. `authentication_error` + `token_expired`),
-    we surface that message directly ("Claude CLI token expired. Run `claude login`"), rather than the generic
-    "Missing Current session" parse failure.
-  - We also extract `Account:` and `Org:` lines when present.
-- Strictness: if Session or Weekly blocks are missing, parsing fails loudly (no silent “100% left” defaults).
-- Resilience: `ClaudeStatusProbe` retries once with a slightly longer timeout (20s + 6s) to ride out slow redraws or ignored Enter presses.
+    - `Current week (Sonnet only)`（任意）
+  - `X% used` は `% left = 100 - X` に変換、`X% left` はそのまま使用。
+  - CLIが `Failed to load usage data` とJSON（例: `authentication_error` + `token_expired`）を返す場合は、
+    一般的な「Missing Current session」ではなく、そのメッセージを直接表示（例: 「Claude CLI token expired. Run `claude login`」）。
+  - `Account:` と `Org:` 行も取得（存在時）。
+- 厳格さ: Session/Weeklyブロックが欠けると解析は失敗（黙って「100% left」は出さない）。
+- しぶとさ: `ClaudeStatusProbe` はやや長いタイムアウト（20秒 + 6秒）で1回リトライし、描画遅延やEnter無視に対応。
 
-### OAuth API (debug only)
-- Uses Claude CLI OAuth credentials (Keychain `Claude Code-credentials` first, then `~/.claude/.credentials.json`).
-- Calls `GET https://api.anthropic.com/api/oauth/usage` with `anthropic-beta: oauth-2025-04-20`.
-- Maps `five_hour` → session, `seven_day` → weekly, `seven_day_sonnet`/`seven_day_opus` → model-specific weekly.
-- Extra usage credits (if present) surface as `ProviderCostSnapshot` in the menu.
-- Enabled via the Debug tab data-source picker or `codexbar --claude-source oauth`.
-- No automatic fallback; errors surface directly.
+### OAuth API（デバッグ専用）
+- Claude CLIのOAuth認証情報を使用（Keychainの `Claude Code-credentials` 優先、次に `~/.claude/.credentials.json`）。
+- `GET https://api.anthropic.com/api/oauth/usage`（`anthropic-beta: oauth-2025-04-20`）を呼ぶ。
+- `five_hour` → セッション、`seven_day` → 週間、`seven_day_sonnet`/`seven_day_opus` → モデル別週間に対応。
+- Extra usageのクレジット（存在時）はメニューで `ProviderCostSnapshot` として表示。
+- デバッグタブのデータソースピッカー、または `codexbar --claude-source oauth` で有効化。
+- 自動フォールバックはなし。エラーはそのまま表示。
 
-### Web cookie enrichment (optional, debug)
-- When the Claude source is forced to CLI and “Augment Claude via web” is enabled, we attempt to read Safari/Chrome/Firefox
-  cookies and fetch Extra usage spend/limit. This is best-effort and does not override identity fields.
+### Web Cookie補完（任意、デバッグ）
+- ClaudeソースをCLIに固定し「WebでClaudeを補完」を有効にした場合、Safari/Chrome/FirefoxのCookieからExtra usageの支出/上限を取得します。最善努力であり、識別情報は上書きしません。
 
-### What we display
-- Session and weekly usage bars; Sonnet-only weekly limit if present.
-- Account line uses Claude CLI data (email + org + login method). Provider identity fields stay siloed.
+### 表示内容
+- セッション/週間の使用量バー。Sonnet専用の週間上限があれば表示。
+- アカウント行はClaude CLIデータ（メール + 組織 + ログイン方法）。識別情報はプロバイダごとに分離。
 
-## Notes
-- Reset parsing: Claude reset lines can be ambiguous; the parser keys off known “Current session / Current week …” section headers so “Resets …” cannot be attributed to the wrong window.
-- Debug: the Debug tab can copy the latest raw CLI scrape to help diagnose upstream CLI formatting changes.
+## メモ
+- リセット解析: Claudeのリセット行は曖昧な場合があるため、「Current session / Current week …」のヘッダで紐付け、誤ったウィンドウに割り当てない。
+- デバッグ: デバッグタブから最新のCLI生スクレイプをコピーでき、CLIフォーマット変更の調査に役立つ。
 
-## Open items / decisions
-- Which template asset to use for the Claude icon (color vs monochrome template); default to a monochrome template PDF sized 20×18.
-- Whether to auto-enable Claude when detected the first time; proposal: keep default off, show “Detected Claude 2.0.44 (enable in Settings)”.
-- Weekly vs session reset text: display the string parsed from the CLI; do not attempt to compute it locally.
+## 未決定事項 / 判断
+- Claudeアイコンのテンプレート素材（カラーかモノクロ）。既定は20×18のモノクロPDF。
+- 初回検出時にClaudeを自動有効化するか。案: 既定オフで「Claude 2.0.44を検出（設定で有効化）」を表示。
+- 週間/セッションのリセット表示: CLIから取得した文字列を表示し、ローカル計算はしない。
 
-## Debugging tips
-- Quick live probe: `LIVE_CLAUDE_FETCH=1 swift test --filter liveClaudeFetchPTY` (prints raw PTY output on failure).
-- Manually drive the runner: `swift run claude-probe` (if you add a temporary target) or reuse the TTYCommandRunner from a Swift REPL.
-- Check the raw text: log the buffer before ANSI stripping if parsing fails—look for stuck autocomplete lists instead of the Usage pane.
-- Debug data source selector: Preferences → Debug → “Claude data source” (OAuth/Web/CLI).
-- Things that commonly break:
-  - Claude CLI not logged in (`claude login` needed).
-  - CLI auth token expired: the Usage pane shows `Error: Failed to load usage data: {"error_code":"token_expired", …}`;
-    rerun `claude login` to refresh tokens. CodexBar now surfaces this message directly.
-  - Enter ignored because the CLI is “Thinking” or busy; rerun with longer timeout or more Enter retries.
-  - Running inside tmux/screen: our PTY driver is standalone, so disable tmux for this path.
-  - Settings > General now shows the last Claude fetch error inline under the toggle to make it clear why usage is stale.
-- Codex parity: when credits are missing because the Codex CLI shows an update prompt, our PTY driver now auto-sends Down+Enter, re-runs `/status`, and retries once with a longer timeout; if it still fails, run `LIVE_CODEX_STATUS=1 swift test --filter liveCodexStatus` to dump the raw screen.
-- To rebuild and reload the menubar app after code changes: `./scripts/compile_and_run.sh`. Ensure the packaged app is restarted so the new PTY driver is in use.
+## デバッグのヒント
+- 簡易ライブプローブ: `LIVE_CLAUDE_FETCH=1 swift test --filter liveClaudeFetchPTY`（失敗時にPTY生出力を表示）。
+- 手動ドライバ: `swift run claude-probe`（一時ターゲット追加時）またはSwift REPLでTTYCommandRunnerを再利用。
+- 生テキスト確認: 解析失敗時はANSI除去前のバッファを記録し、Usageペインではなく自動補完リストで詰まっていないか確認。
+- デバッグのデータソース選択: 設定 → デバッグ → 「Claudeデータソース」（OAuth/Web/CLI）。
+- よくある破綻:
+  - Claude CLIが未ログイン（`claude login` が必要）。
+  - 認証トークン期限切れ: Usageペインに `Error: Failed to load usage data: {"error_code":"token_expired", …}` が出る。
+    `claude login` で更新し、CodexBarはこのメッセージを直接表示する。
+  - Enterが無視される（CLIが「Thinking」や忙しい状態）。タイムアウト延長やEnter再送回数で対応。
+  - tmux/screen内で実行: PTYドライバは単独動作のため、この経路ではtmuxを無効化する。
+  - 設定 → 一般では、Claudeの最終取得エラーがトグル直下に表示される（使用量が古い理由が分かる）。
+- Codex側の補足: Codex CLIが更新プロンプトを出してクレジットが取れない場合、PTYドライバはDown+Enterを自動送信し `/status` を再実行。さらに長いタイムアウトで1回リトライし、失敗時は `LIVE_CODEX_STATUS=1 swift test --filter liveCodexStatus` で生画面を出力。
+- コード変更後にメニューバーアプリを再ビルド/再読み込みする場合: `./scripts/compile_and_run.sh`。新しいPTYドライバが使われるよう、アプリを再起動してください。

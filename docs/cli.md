@@ -1,24 +1,23 @@
 ---
-summary: "CodexBar CLI for fetching usage from the command line."
+summary: "コマンドラインから使用量を取得する CodexBar CLI。"
 read_when:
-  - "You want to call CodexBar data from scripts or a terminal."
-  - "Adding or modifying Commander-based CLI commands."
-  - "Aligning menubar and CLI output/behavior."
+  - "スクリプトやターミナルからCodexBarのデータを使いたいとき"
+  - "CommanderベースのCLIコマンドを追加/変更するとき"
+  - "メニューバーとCLIの出力/挙動をそろえるとき"
 ---
 
 # CodexBar CLI
 
-A lightweight Commander-based CLI that mirrors the menubar app’s data paths (Codex web/RPC → PTY fallback; Claude web by default with CLI fallback and OAuth debug).
-Use it when you need usage numbers in scripts, CI, or dashboards without UI.
+メニューバーアプリのデータ取得経路（Codex Web/RPC → PTYフォールバック、Claude Web既定 + CLIフォールバック + OAuthデバッグ）を再現する、軽量なCommanderベースのCLIです。UIなしでスクリプト/CI/ダッシュボードに使用量を取り込みたいときに使います。
 
-## Install
-- In the app: **Preferences → Advanced → Install CLI**. This symlinks `CodexBarCLI` to `/usr/local/bin/codexbar` and `/opt/homebrew/bin/codexbar`.
-- From the repo: `./bin/install-codexbar-cli.sh` (same symlink targets).
-- Manual: `ln -sf "/Applications/CodexBar.app/Contents/Helpers/CodexBarCLI" /usr/local/bin/codexbar`.
+## インストール
+- アプリ内: **設定 → 高度な設定 → CLIをインストール**。`CodexBarCLI` を `/usr/local/bin/codexbar` と `/opt/homebrew/bin/codexbar` にシンボリックリンクします。
+- リポジトリから: `./bin/install-codexbar-cli.sh`（同じリンク先）。
+- 手動: `ln -sf "/Applications/CodexBar.app/Contents/Helpers/CodexBarCLI" /usr/local/bin/codexbar`。
 
-### Linux install
-- Download `CodexBarCLI-<tag>-linux-<arch>.tar.gz` from GitHub Releases (x86_64 + aarch64).
-- Extract; run `./codexbar` (symlink) or `./CodexBarCLI`.
+### Linuxインストール
+- GitHub Releases から `CodexBarCLI-<tag>-linux-<arch>.tar.gz`（x86_64 + aarch64）をダウンロード。
+- 展開して `./codexbar`（シンボリックリンク）または `./CodexBarCLI` を実行。
 
 ```
 tar -xzf CodexBarCLI-0.14.1-linux-x86_64.tar.gz
@@ -26,43 +25,43 @@ tar -xzf CodexBarCLI-0.14.1-linux-x86_64.tar.gz
 ./codexbar usage --format json --pretty
 ```
 
-## Build
-- `./Scripts/package_app.sh` (or `./Scripts/compile_and_run.sh`) bundles `CodexBarCLI` into `CodexBar.app/Contents/Helpers/CodexBarCLI`.
-- Standalone: `swift build -c release --product CodexBarCLI` (binary at `./.build/release/CodexBarCLI`).
-- Dependencies: Swift 6.2+, Commander package (`https://github.com/steipete/Commander`).
+## ビルド
+- `./Scripts/package_app.sh`（または `./Scripts/compile_and_run.sh`）で `CodexBarCLI` が `CodexBar.app/Contents/Helpers/CodexBarCLI` に同梱されます。
+- 単体ビルド: `swift build -c release --product CodexBarCLI`（出力は `./.build/release/CodexBarCLI`）。
+- 依存: Swift 6.2+、Commanderパッケージ（`https://github.com/steipete/Commander`）。
 
-## Command
-- `codexbar` defaults to the `usage` command.
-  - `--format text|json` (default: text).
-  - `--provider codex|claude|gemini|antigravity|both|all` (default: your in-app toggles; falls back to Codex).
-  - `--no-credits` (hide Codex credits in text output).
-  - `--pretty` (pretty-print JSON).
-  - `--status` (fetch provider status pages and include them in output).
-  - `--antigravity-plan-debug` (debug: print Antigravity planInfo fields to stderr).
-- `--source <auto|web|cli|oauth>` (default: `auto`).
-    - `auto` (macOS only): uses browser cookies for Codex + Claude, with CLI fallback only when cookies are missing.
-    - `web` (macOS only): web-only; no CLI fallback.
-    - `cli`: CLI-only (Codex RPC → PTY fallback; Claude PTY).
-    - `oauth`: Claude OAuth only (debug); no fallback. Not supported for Codex.
-    - Codex web: OpenAI web dashboard (usage limits, credits remaining, code review remaining, usage breakdown).
-        - `--web-timeout <seconds>` (default: 60)
-        - `--web-debug-dump-html` (writes HTML snapshots to `/tmp` when data is missing)
-    - Claude web: claude.ai API (session + weekly usage, plus account metadata when available).
-    - Linux: `web/auto` are not supported; CLI prints an error and exits non-zero.
-- Global flags: `-h/--help`, `-V/--version`, `-v/--verbose`, `--log-level <trace|verbose|debug|info|warning|error|critical>`, `--json-output`.
+## コマンド
+- `codexbar` は既定で `usage` コマンドを実行します。
+  - `--format text|json`（既定: text）。
+  - `--provider codex|claude|gemini|antigravity|both|all`（既定: アプリ内トグル。なければCodex）。
+  - `--no-credits`（テキスト出力でCodexクレジットを非表示）。
+  - `--pretty`（JSONを整形）。
+  - `--status`（プロバイダのステータスページを取得して出力に含める）。
+  - `--antigravity-plan-debug`（デバッグ: AntigravityのplanInfoフィールドをstderrに出力）。
+- `--source <auto|web|cli|oauth>`（既定: `auto`）。
+    - `auto`（macOSのみ）: Codex + ClaudeはブラウザCookieを使用し、Cookieがない場合のみCLIフォールバック。
+    - `web`（macOSのみ）: Webのみ。CLIフォールバックなし。
+    - `cli`: CLIのみ（Codex RPC → PTYフォールバック、Claude PTY）。
+    - `oauth`: Claude OAuthのみ（デバッグ）。フォールバックなし。Codexでは非対応。
+    - Codex Web: OpenAI Webダッシュボード（使用量上限、残りクレジット、コードレビュー残量、使用量内訳）。
+        - `--web-timeout <seconds>`（既定: 60）
+        - `--web-debug-dump-html`（データが欠落した場合にHTMLスナップショットを `/tmp` に保存）
+    - Claude Web: claude.ai API（セッション + 週間使用量、可能ならアカウントメタデータ）。
+    - Linux: `web/auto` は未対応。CLIはエラーを出して非ゼロ終了します。
+- グローバルフラグ: `-h/--help`, `-V/--version`, `-v/--verbose`, `--log-level <trace|verbose|debug|info|warning|error|critical>`, `--json-output`。
 
-## Example usage
+## 使用例
 ```
-codexbar                          # text, respects app toggles
-codexbar --provider claude        # force Claude
-codexbar --provider all           # query all providers (honors your logins/toggles)
-codexbar --format json --pretty   # machine output
+codexbar                          # テキスト、アプリのトグルを尊重
+codexbar --provider claude        # Claudeを強制
+codexbar --provider all           # すべてのプロバイダを問い合わせ（ログイン/トグルを尊重）
+codexbar --format json --pretty   # 機械向け出力
 codexbar --format json --provider both
-codexbar --status                 # include status page indicator/description
+codexbar --status                 # ステータス指標/説明を含める
 codexbar --provider codex --source web --format json --pretty
 ```
 
-### Sample output (text)
+### 出力例（text）
 ```
 Codex 0.6.0 (codex-cli)
 Session: 72% left
@@ -81,7 +80,7 @@ Account: user@example.com
 Plan: Pro
 ```
 
-### Sample output (JSON, pretty)
+### 出力例（JSON、整形）
 ```json
 {
   "provider": "codex",
@@ -114,17 +113,17 @@ Plan: Pro
 }
 ```
 
-## Exit codes
-- 0: success
-- 2: provider missing (binary not on PATH)
-- 3: parse/format error
-- 4: CLI timeout
-- 1: unexpected failure
+## 終了コード
+- 0: 成功
+- 2: プロバイダ不在（PATHにバイナリがない）
+- 3: 解析/フォーマットエラー
+- 4: CLIタイムアウト
+- 1: 予期しない失敗
 
-## Notes
-- CLI reuses menubar toggles when present (prefers `com.steipete.codexbar{,.debug}` defaults), otherwise defaults to Codex only.
-- Prefer Codex RPC first, then PTY fallback; Claude defaults to web with CLI fallback when cookies are missing.
-- OpenAI web requires a signed-in `chatgpt.com` session in Safari, Chrome, or Firefox. No passwords are stored; CodexBar reuses cookies.
-- Safari cookie import may require granting CodexBar Full Disk Access (System Settings → Privacy & Security → Full Disk Access).
-- The `openaiDashboard` JSON field is normally sourced from the app’s cached dashboard snapshot; `--source auto|web` refreshes it live via WebKit using a per-account cookie store.
-- Future: optional `--from-cache` flag to read the menubar app’s persisted snapshot (if/when that file lands).
+## 注意点
+- CLIはメニューバートグルを再利用します（`com.steipete.codexbar{,.debug}` のdefaultsがあればそれを優先）。なければCodexのみ。
+- CodexはRPC優先 → PTYフォールバック。ClaudeはWeb優先で、Cookieがない場合のみCLIフォールバック。
+- OpenAI Webには `chatgpt.com` のサインインセッションが必要です（Safari/Chrome/Firefox）。パスワードは保存せず、Cookieを再利用します。
+- SafariのCookie取り込みにはCodexBarのフルディスクアクセスが必要な場合があります（システム設定 → プライバシーとセキュリティ → フルディスクアクセス）。
+- `openaiDashboard` のJSONは通常アプリのキャッシュ済みダッシュボードスナップショット由来です。`--source auto|web` はWebKitでライブ更新します。
+- 予定: メニューバーのスナップショットを読む `--from-cache` フラグ（将来）。

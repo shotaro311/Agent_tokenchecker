@@ -1,9 +1,11 @@
 import AppKit
+import CodexBarCore
 import SwiftUI
 
 @MainActor
 struct AboutPane: View {
     let updater: UpdaterProviding
+    let language: AppLanguage
     @State private var iconHover = false
     @AppStorage("autoUpdateEnabled") private var autoUpdateEnabled: Bool = true
     @State private var didLoadUpdaterState = false
@@ -23,11 +25,12 @@ struct AboutPane: View {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        formatter.locale = .current
+        formatter.locale = self.language.locale
         return formatter.string(from: date)
     }
 
     var body: some View {
+        let l10n = AppLocalization(language: self.language)
         VStack(spacing: 12) {
             if let image = NSApplication.shared.applicationIconImage {
                 Button(action: self.openProjectHome) {
@@ -49,14 +52,16 @@ struct AboutPane: View {
             VStack(spacing: 2) {
                 Text("CodexBar")
                     .font(.title3).bold()
-                Text("Version \(self.versionString)")
+                Text(l10n.choose("Version \(self.versionString)", "バージョン \(self.versionString)"))
                     .foregroundStyle(.secondary)
                 if let buildTimestamp {
-                    Text("Built \(buildTimestamp)")
+                    Text(l10n.choose("Built \(buildTimestamp)", "ビルド \(buildTimestamp)"))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                Text("May your tokens never run out—keep Codex limits in view.")
+                Text(l10n.choose(
+                    "May your tokens never run out—keep Codex limits in view.",
+                    "トークン切れのないよう、Codexの上限を常に見えるところに。"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -66,9 +71,18 @@ struct AboutPane: View {
                     icon: "chevron.left.slash.chevron.right",
                     title: "GitHub",
                     url: "https://github.com/steipete/CodexBar")
-                AboutLinkRow(icon: "globe", title: "Website", url: "https://steipete.me")
-                AboutLinkRow(icon: "bird", title: "Twitter", url: "https://twitter.com/steipete")
-                AboutLinkRow(icon: "envelope", title: "Email", url: "mailto:peter@steipete.me")
+                AboutLinkRow(
+                    icon: "globe",
+                    title: l10n.choose("Website", "ウェブサイト"),
+                    url: "https://steipete.me")
+                AboutLinkRow(
+                    icon: "bird",
+                    title: l10n.choose("Twitter", "Twitter"),
+                    url: "https://twitter.com/steipete")
+                AboutLinkRow(
+                    icon: "envelope",
+                    title: l10n.choose("Email", "メール"),
+                    url: "mailto:peter@steipete.me")
             }
             .padding(.top, 8)
             .frame(maxWidth: .infinity)
@@ -78,17 +92,21 @@ struct AboutPane: View {
 
             if self.updater.isAvailable {
                 VStack(spacing: 10) {
-                    Toggle("Check for updates automatically", isOn: self.$autoUpdateEnabled)
+                    Toggle(l10n.choose("Check for updates automatically", "更新を自動的に確認"), isOn: self.$autoUpdateEnabled)
                         .toggleStyle(.checkbox)
                         .frame(maxWidth: .infinity, alignment: .center)
-                    Button("Check for Updates…") { self.updater.checkForUpdates(nil) }
+                    Button(l10n.choose("Check for Updates…", "更新を確認…")) { self.updater.checkForUpdates(nil) }
                 }
             } else {
-                Text(self.updater.unavailableReason ?? "Updates unavailable in this build.")
+                Text(self.updater.unavailableReason ?? l10n.choose(
+                    "Updates unavailable in this build.",
+                    "このビルドでは更新を利用できません。"))
                     .foregroundStyle(.secondary)
             }
 
-            Text("© 2025 Peter Steinberger. MIT License.")
+            Text(l10n.choose(
+                "© 2025 Peter Steinberger. MIT License.",
+                "© 2025 Peter Steinberger. MITライセンス。"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.top, 4)

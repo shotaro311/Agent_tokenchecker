@@ -1,18 +1,43 @@
 import Foundation
 
 public enum UsageFormatter {
-    public static func usageLine(remaining: Double, used: Double) -> String {
-        String(format: "%.0f%% left", remaining)
+    public static func usageLine(
+        remaining: Double,
+        used: Double,
+        language: AppLanguage = .english) -> String
+    {
+        _ = used
+        let l10n = AppLocalization(language: language)
+        let value = String(format: "%.0f%%", remaining)
+        return l10n.choose("\(value) left", "残り\(value)")
     }
 
-    public static func resetCountdownDescription(from date: Date, now: Date = .init()) -> String {
+    public static func resetCountdownDescription(
+        from date: Date,
+        now: Date = .init(),
+        language: AppLanguage = .english) -> String
+    {
         let seconds = max(0, date.timeIntervalSince(now))
-        if seconds < 1 { return "now" }
+        if seconds < 1 {
+            return language == .japanese ? "いま" : "now"
+        }
 
         let totalMinutes = max(1, Int(ceil(seconds / 60.0)))
         let days = totalMinutes / (24 * 60)
         let hours = (totalMinutes / 60) % 24
         let minutes = totalMinutes % 60
+
+        if language == .japanese {
+            if days > 0 {
+                if hours > 0 { return "あと\(days)日\(hours)時間" }
+                return "あと\(days)日"
+            }
+            if hours > 0 {
+                if minutes > 0 { return "あと\(hours)時間\(minutes)分" }
+                return "あと\(hours)時間"
+            }
+            return "あと\(totalMinutes)分"
+        }
 
         if days > 0 {
             if hours > 0 { return "in \(days)d \(hours)h" }
@@ -25,73 +50,95 @@ public enum UsageFormatter {
         return "in \(totalMinutes)m"
     }
 
-    public static func resetDescription(from date: Date, now: Date = .init()) -> String {
+    public static func resetDescription(
+        from date: Date,
+        now: Date = .init(),
+        language: AppLanguage = .english) -> String
+    {
         // Human-friendly phrasing: today / tomorrow / date+time.
+        let l10n = AppLocalization(language: language)
+        let locale = l10n.locale
         let calendar = Calendar.current
         if calendar.isDate(date, inSameDayAs: now) {
-            return date.formatted(date: .omitted, time: .shortened)
+            return date.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(locale))
         }
         if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now),
            calendar.isDate(date, inSameDayAs: tomorrow)
         {
-            return "tomorrow, \(date.formatted(date: .omitted, time: .shortened))"
+            let time = date.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(locale))
+            return l10n.choose("tomorrow, \(time)", "明日 \(time)")
         }
-        return date.formatted(date: .abbreviated, time: .shortened)
+        return date.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale))
     }
 
-    public static func updatedString(from date: Date, now: Date = .init()) -> String {
+    public static func updatedString(
+        from date: Date,
+        now: Date = .init(),
+        language: AppLanguage = .english) -> String
+    {
+        let l10n = AppLocalization(language: language)
+        let locale = l10n.locale
         let delta = now.timeIntervalSince(date)
         if abs(delta) < 60 {
-            return "Updated just now"
+            return l10n.choose("Updated just now", "更新: たった今")
         }
         if let hours = Calendar.current.dateComponents([.hour], from: date, to: now).hour, hours < 24 {
             #if os(macOS)
             let rel = RelativeDateTimeFormatter()
             rel.unitsStyle = .abbreviated
-            return "Updated \(rel.localizedString(for: date, relativeTo: now))"
+            rel.locale = locale
+            let relative = rel.localizedString(for: date, relativeTo: now)
+            return l10n.choose("Updated \(relative)", "更新: \(relative)")
             #else
             let seconds = max(0, Int(now.timeIntervalSince(date)))
             if seconds < 3600 {
                 let minutes = max(1, seconds / 60)
-                return "Updated \(minutes)m ago"
+                return l10n.choose("Updated \(minutes)m ago", "更新: \(minutes)分前")
             }
             let wholeHours = max(1, seconds / 3600)
-            return "Updated \(wholeHours)h ago"
+            return l10n.choose("Updated \(wholeHours)h ago", "更新: \(wholeHours)時間前")
             #endif
         } else {
-            return "Updated \(date.formatted(date: .omitted, time: .shortened))"
+            let time = date.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(locale))
+            return l10n.choose("Updated \(time)", "更新: \(time)")
         }
     }
 
-    public static func creditsString(from value: Double) -> String {
+    public static func creditsString(from value: Double, language: AppLanguage = .english) -> String {
+        let l10n = AppLocalization(language: language)
         let number = NumberFormatter()
         number.numberStyle = .decimal
         number.maximumFractionDigits = 2
+        number.locale = l10n.locale
         let formatted = number.string(from: NSNumber(value: value)) ?? String(Int(value))
-        return "\(formatted) left"
+        return l10n.choose("\(formatted) left", "残り\(formatted)")
     }
 
-    public static func usdString(_ value: Double) -> String {
+    public static func usdString(_ value: Double, language: AppLanguage = .english) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 2
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = language.locale
         return formatter.string(from: NSNumber(value: value)) ?? String(format: "$%.2f", value)
     }
 
-    public static func currencyString(_ value: Double, currencyCode: String) -> String {
+    public static func currencyString(
+        _ value: Double,
+        currencyCode: String,
+        language: AppLanguage = .english) -> String
+    {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = currencyCode
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 2
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = language.locale
         return formatter.string(from: NSNumber(value: value)) ?? "\(currencyCode) \(String(format: "%.2f", value))"
     }
 
-    public static func tokenCountString(_ value: Int) -> String {
+    public static func tokenCountString(_ value: Int, language: AppLanguage = .english) -> String {
         let absValue = abs(value)
         let sign = value < 0 ? "-" : ""
 
@@ -117,26 +164,33 @@ public enum UsageFormatter {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.usesGroupingSeparator = true
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = language.locale
         return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 
-    public static func creditEventSummary(_ event: CreditEvent) -> String {
+    public static func creditEventSummary(_ event: CreditEvent, language: AppLanguage = .english) -> String {
+        let l10n = AppLocalization(language: language)
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
+        formatter.locale = l10n.locale
         let number = NumberFormatter()
         number.numberStyle = .decimal
         number.maximumFractionDigits = 2
+        number.locale = l10n.locale
         let credits = number.string(from: NSNumber(value: event.creditsUsed)) ?? "0"
-        return "\(formatter.string(from: event.date)) · \(event.service) · \(credits) credits"
+        let creditsLabel = l10n.choose("credits", "クレジット")
+        return "\(formatter.string(from: event.date)) · \(event.service) · \(credits) \(creditsLabel)"
     }
 
-    public static func creditEventCompact(_ event: CreditEvent) -> String {
+    public static func creditEventCompact(_ event: CreditEvent, language: AppLanguage = .english) -> String {
+        let l10n = AppLocalization(language: language)
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d"
+        formatter.locale = l10n.locale
         let number = NumberFormatter()
         number.numberStyle = .decimal
         number.maximumFractionDigits = 2
+        number.locale = l10n.locale
         let credits = number.string(from: NSNumber(value: event.creditsUsed)) ?? "0"
         return "\(formatter.string(from: event.date)) — \(event.service): \(credits)"
     }

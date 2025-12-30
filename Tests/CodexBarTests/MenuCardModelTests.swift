@@ -53,7 +53,8 @@ struct MenuCardModelTests {
             usageBarsShowUsed: false,
             tokenCostUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
-            now: now))
+            now: now,
+            language: .english))
 
         #expect(model.providerName == "Codex")
         #expect(model.metrics.count == 2)
@@ -108,11 +109,12 @@ struct MenuCardModelTests {
             usageBarsShowUsed: true,
             tokenCostUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
-            now: now))
+            now: now,
+            language: .english))
 
         #expect(model.metrics.first?.title == "Session")
         #expect(model.metrics.first?.percent == 22)
-        #expect(model.metrics.first?.percentLabel.contains("used") == true)
+        #expect(model.metrics.first?.percentLabel(language: .english).contains("used") == true)
         #expect(model.metrics.contains { $0.title == "Code review" && $0.percent == 27 })
     }
 
@@ -153,7 +155,8 @@ struct MenuCardModelTests {
             usageBarsShowUsed: false,
             tokenCostUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
-            now: now))
+            now: now,
+            language: .english))
 
         #expect(model.metrics.contains { $0.title == "Code review" && $0.percent == 73 })
     }
@@ -190,7 +193,8 @@ struct MenuCardModelTests {
             usageBarsShowUsed: false,
             tokenCostUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
-            now: now))
+            now: now,
+            language: .english))
 
         #expect(model.metrics.count == 1)
         #expect(model.metrics.first?.title == "Session")
@@ -216,7 +220,8 @@ struct MenuCardModelTests {
             usageBarsShowUsed: false,
             tokenCostUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
-            now: Date()))
+            now: Date(),
+            language: .english))
 
         #expect(model.subtitleStyle == .error)
         #expect(model.subtitleText.contains("Probe failed"))
@@ -258,7 +263,8 @@ struct MenuCardModelTests {
             usageBarsShowUsed: false,
             tokenCostUsageEnabled: true,
             showOptionalCreditsAndExtraUsage: true,
-            now: now))
+            now: now,
+            language: .english))
 
         #expect(model.tokenUsage?.monthLine.contains("456") == true)
         #expect(model.tokenUsage?.monthLine.contains("tokens") == true)
@@ -283,7 +289,8 @@ struct MenuCardModelTests {
             usageBarsShowUsed: false,
             tokenCostUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
-            now: Date()))
+            now: Date(),
+            language: .english))
 
         #expect(model.planText == nil)
         #expect(model.email.isEmpty)
@@ -318,7 +325,8 @@ struct MenuCardModelTests {
             usageBarsShowUsed: false,
             tokenCostUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: false,
-            now: now))
+            now: now,
+            language: .english))
 
         #expect(model.creditsText == nil)
     }
@@ -353,7 +361,8 @@ struct MenuCardModelTests {
             usageBarsShowUsed: false,
             tokenCostUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: false,
-            now: now))
+            now: now,
+            language: .english))
 
         #expect(model.providerCost == nil)
     }

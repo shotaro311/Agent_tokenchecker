@@ -1,8 +1,11 @@
 import AppKit
+import CodexBarCore
 
 @MainActor
 func showAbout() {
     NSApp.activate(ignoringOtherApps: true)
+    let language = AppLanguageStore.load()
+    let l10n = AppLocalization(language: language)
 
     let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
     let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
@@ -21,20 +24,22 @@ func showAbout() {
         ])
     }
 
-    let credits = NSMutableAttributedString(string: "Peter Steinberger — MIT License\n")
+    let credits = NSMutableAttributedString(string: l10n.choose(
+        "Peter Steinberger — MIT License\n",
+        "Peter Steinberger — MITライセンス\n"))
     credits.append(makeLink("GitHub", urlString: "https://github.com/steipete/CodexBar"))
     credits.append(separator)
-    credits.append(makeLink("Website", urlString: "https://steipete.me"))
+    credits.append(makeLink(l10n.choose("Website", "ウェブサイト"), urlString: "https://steipete.me"))
     credits.append(separator)
-    credits.append(makeLink("Twitter", urlString: "https://twitter.com/steipete"))
+    credits.append(makeLink(l10n.choose("Twitter", "Twitter"), urlString: "https://twitter.com/steipete"))
     credits.append(separator)
-    credits.append(makeLink("Email", urlString: "mailto:peter@steipete.me"))
-    if let buildTimestamp, let formatted = formattedBuildTimestamp(buildTimestamp) {
-        var builtLine = "Built \(formatted)"
+    credits.append(makeLink(l10n.choose("Email", "メール"), urlString: "mailto:peter@steipete.me"))
+    if let buildTimestamp, let formatted = formattedBuildTimestamp(buildTimestamp, language: language) {
+        var builtLine = l10n.choose("Built \(formatted)", "ビルド \(formatted)")
         if let gitCommit, !gitCommit.isEmpty, gitCommit != "unknown" {
             builtLine += " (\(gitCommit)"
             #if DEBUG
-            builtLine += " DEBUG BUILD"
+            builtLine += l10n.choose(" DEBUG BUILD", " デバッグビルド")
             #endif
             builtLine += ")"
         }
@@ -60,7 +65,7 @@ func showAbout() {
     }
 }
 
-private func formattedBuildTimestamp(_ timestamp: String) -> String? {
+private func formattedBuildTimestamp(_ timestamp: String, language: AppLanguage) -> String? {
     let parser = ISO8601DateFormatter()
     parser.formatOptions = [.withInternetDateTime]
     guard let date = parser.date(from: timestamp) else { return timestamp }
@@ -68,7 +73,7 @@ private func formattedBuildTimestamp(_ timestamp: String) -> String? {
     let formatter = DateFormatter()
     formatter.dateStyle = .medium
     formatter.timeStyle = .short
-    formatter.locale = .current
+    formatter.locale = language.locale
     return formatter.string(from: date)
 }
 

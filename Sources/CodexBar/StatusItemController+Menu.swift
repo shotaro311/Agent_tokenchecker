@@ -8,6 +8,8 @@ import SwiftUI
 extension StatusItemController {
     private static let menuCardBaseWidth: CGFloat = 310
     private static let menuOpenRefreshDelay: Duration = .seconds(1.2)
+    private var l10n: AppLocalization { AppLocalization(language: self.settings.appLanguage) }
+    private var external: ExternalTextLocalizer { ExternalTextLocalizer(language: self.settings.appLanguage) }
     private struct OpenAIWebMenuItems {
         let hasUsageBreakdown: Bool
         let hasCreditsHistory: Bool
@@ -230,6 +232,7 @@ extension StatusItemController {
         let view = ProviderSwitcherView(
             providers: providers,
             selected: selected,
+            language: self.settings.appLanguage,
             width: self.menuCardWidth(for: providers, menu: menu),
             showsIcons: self.settings.switcherShowsIcons,
             iconProvider: { [weak self] provider in
@@ -625,7 +628,10 @@ extension StatusItemController {
     }
 
     private func makeBuyCreditsItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Buy Credits...", action: #selector(self.openCreditsPurchase), keyEquivalent: "")
+        let item = NSMenuItem(
+            title: self.l10n.choose("Buy Credits...", "クレジットを購入..."),
+            action: #selector(self.openCreditsPurchase),
+            keyEquivalent: "")
         item.target = self
         if let image = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: nil) {
             image.isTemplate = true
@@ -638,7 +644,7 @@ extension StatusItemController {
     @discardableResult
     private func addCreditsHistorySubmenu(to menu: NSMenu) -> Bool {
         guard let submenu = self.makeCreditsHistorySubmenu() else { return false }
-        let item = NSMenuItem(title: "Credits history", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: self.l10n.choose("Credits history", "クレジット履歴"), action: nil, keyEquivalent: "")
         item.isEnabled = true
         item.submenu = submenu
         menu.addItem(item)
@@ -648,7 +654,7 @@ extension StatusItemController {
     @discardableResult
     private func addUsageBreakdownSubmenu(to menu: NSMenu) -> Bool {
         guard let submenu = self.makeUsageBreakdownSubmenu() else { return false }
-        let item = NSMenuItem(title: "Usage breakdown", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: self.l10n.choose("Usage breakdown", "使用量の内訳"), action: nil, keyEquivalent: "")
         item.isEnabled = true
         item.submenu = submenu
         menu.addItem(item)
@@ -658,7 +664,10 @@ extension StatusItemController {
     @discardableResult
     private func addCostHistorySubmenu(to menu: NSMenu, provider: UsageProvider) -> Bool {
         guard let submenu = self.makeCostHistorySubmenu(provider: provider) else { return false }
-        let item = NSMenuItem(title: "Usage history (30 days)", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(
+            title: self.l10n.choose("Usage history (30 days)", "使用履歴（30日）"),
+            action: nil,
+            keyEquivalent: "")
         item.isEnabled = true
         item.submenu = submenu
         menu.addItem(item)
@@ -684,18 +693,24 @@ extension StatusItemController {
         guard !timeLimit.usageDetails.isEmpty else { return nil }
 
         let submenu = NSMenu()
-        let titleItem = NSMenuItem(title: "MCP details", action: nil, keyEquivalent: "")
+        let titleItem = NSMenuItem(title: self.l10n.choose("MCP details", "MCP詳細"), action: nil, keyEquivalent: "")
         titleItem.isEnabled = false
         submenu.addItem(titleItem)
 
         if let window = timeLimit.windowLabel {
-            let item = NSMenuItem(title: "Window: \(window)", action: nil, keyEquivalent: "")
+            let item = NSMenuItem(
+                title: self.l10n.choose("Window: \(window)", "期間: \(window)"),
+                action: nil,
+                keyEquivalent: "")
             item.isEnabled = false
             submenu.addItem(item)
         }
         if let resetTime = timeLimit.nextResetTime {
-            let reset = UsageFormatter.resetDescription(from: resetTime)
-            let item = NSMenuItem(title: "Resets: \(reset)", action: nil, keyEquivalent: "")
+            let reset = UsageFormatter.resetDescription(from: resetTime, language: self.settings.appLanguage)
+            let item = NSMenuItem(
+                title: self.l10n.choose("Resets: \(reset)", "リセット: \(reset)"),
+                action: nil,
+                keyEquivalent: "")
             item.isEnabled = false
             submenu.addItem(item)
         }
@@ -705,7 +720,7 @@ extension StatusItemController {
             $0.modelCode.localizedCaseInsensitiveCompare($1.modelCode) == .orderedAscending
         }
         for detail in sortedDetails {
-            let usage = UsageFormatter.tokenCountString(detail.usage)
+            let usage = UsageFormatter.tokenCountString(detail.usage, language: self.settings.appLanguage)
             let item = NSMenuItem(title: "\(detail.modelCode): \(usage)", action: nil, keyEquivalent: "")
             submenu.addItem(item)
         }
@@ -719,7 +734,10 @@ extension StatusItemController {
 
         let submenu = NSMenu()
         submenu.delegate = self
-        let chartView = UsageBreakdownChartMenuView(breakdown: breakdown, width: width)
+        let chartView = UsageBreakdownChartMenuView(
+            breakdown: breakdown,
+            width: width,
+            language: self.settings.appLanguage)
         let hosting = MenuHostingView(rootView: chartView)
         hosting.frame = NSRect(origin: .zero, size: NSSize(width: width, height: 1))
         hosting.layoutSubtreeIfNeeded()
@@ -741,7 +759,10 @@ extension StatusItemController {
 
         let submenu = NSMenu()
         submenu.delegate = self
-        let chartView = CreditsHistoryChartMenuView(breakdown: breakdown, width: width)
+        let chartView = CreditsHistoryChartMenuView(
+            breakdown: breakdown,
+            width: width,
+            language: self.settings.appLanguage)
         let hosting = MenuHostingView(rootView: chartView)
         hosting.frame = NSRect(origin: .zero, size: NSSize(width: width, height: 1))
         hosting.layoutSubtreeIfNeeded()
@@ -768,7 +789,8 @@ extension StatusItemController {
             provider: provider,
             daily: tokenSnapshot.daily,
             totalCostUSD: tokenSnapshot.last30DaysCostUSD,
-            width: width)
+            width: width,
+            language: self.settings.appLanguage)
         let hosting = MenuHostingView(rootView: chartView)
         hosting.frame = NSRect(origin: .zero, size: NSSize(width: width, height: 1))
         hosting.layoutSubtreeIfNeeded()
@@ -858,7 +880,8 @@ extension StatusItemController {
             usageBarsShowUsed: self.settings.usageBarsShowUsed,
             tokenCostUsageEnabled: self.settings.isCCUsageCostUsageEffectivelyEnabled(for: target),
             showOptionalCreditsAndExtraUsage: self.settings.showOptionalCreditsAndExtraUsage,
-            now: Date())
+            now: Date(),
+            language: self.settings.appLanguage)
         return UsageMenuCardView.Model.make(input)
     }
 
@@ -884,6 +907,7 @@ private final class ProviderSwitcherView: NSView {
     private let onSelect: (UsageProvider) -> Void
     private let showsIcons: Bool
     private let weeklyRemainingProvider: (UsageProvider) -> Double?
+    private let language: AppLanguage
     private var buttons: [NSButton] = []
     private var weeklyIndicators: [ObjectIdentifier: WeeklyIndicator] = [:]
     private let selectedBackground = NSColor.controlAccentColor.cgColor
@@ -896,14 +920,16 @@ private final class ProviderSwitcherView: NSView {
     init(
         providers: [UsageProvider],
         selected: UsageProvider?,
+        language: AppLanguage,
         width: CGFloat,
         showsIcons: Bool,
         iconProvider: (UsageProvider) -> NSImage,
         weeklyRemainingProvider: @escaping (UsageProvider) -> Double?,
         onSelect: @escaping (UsageProvider) -> Void)
     {
+        self.language = language
         self.segments = providers.map { provider in
-            let fullTitle = Self.switcherTitle(for: provider)
+            let fullTitle = ExternalTextLocalizer(language: language).providerName(provider)
             let icon = iconProvider(provider)
             icon.isTemplate = true
             // Avoid any resampling: we ship exact 16pt/32px assets for crisp rendering.
@@ -1323,18 +1349,6 @@ private final class ProviderSwitcherView: NSView {
             NSColor(deviceRed: 0 / 255, green: 191 / 255, blue: 165 / 255, alpha: 1) // #00BFA5
         case .factory:
             NSColor(deviceRed: 255 / 255, green: 107 / 255, blue: 53 / 255, alpha: 1) // Factory orange
-        }
-    }
-
-    private static func switcherTitle(for provider: UsageProvider) -> String {
-        switch provider {
-        case .codex: "Codex"
-        case .claude: "Claude"
-        case .zai: "z.ai"
-        case .gemini: "Gemini"
-        case .antigravity: "Antigravity"
-        case .cursor: "Cursor"
-        case .factory: "Droid"
         }
     }
 }

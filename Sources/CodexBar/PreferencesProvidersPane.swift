@@ -19,6 +19,8 @@ struct ProvidersPane: View {
     @State private var activeConfirmation: ProviderSettingsConfirmationState?
 
     private var providers: [UsageProvider] { self.settings.orderedProviders() }
+    private var l10n: AppLocalization { AppLocalization(language: self.settings.appLanguage) }
+    private var external: ExternalTextLocalizer { ExternalTextLocalizer(language: self.settings.appLanguage) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -26,6 +28,7 @@ struct ProvidersPane: View {
 
             ProviderListView(
                 providers: self.providers,
+                language: self.settings.appLanguage,
                 store: self.store,
                 isEnabled: { provider in self.binding(for: provider) },
                 subtitle: { provider in self.providerSubtitle(provider) },
@@ -57,7 +60,7 @@ struct ProvidersPane: View {
                         active.onConfirm()
                         self.activeConfirmation = nil
                     }
-                    Button("Cancel", role: .cancel) { self.activeConfirmation = nil }
+                    Button(self.l10n.choose("Cancel", "キャンセル"), role: .cancel) { self.activeConfirmation = nil }
                 }
             },
             message: {
@@ -69,7 +72,7 @@ struct ProvidersPane: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Providers")
+            Text(self.l10n.choose("Providers", "プロバイダ"))
                 .font(.headline)
         }
     }
@@ -85,19 +88,19 @@ struct ProvidersPane: View {
         let meta = self.store.metadata(for: provider)
         let cliName = meta.cliName
         let version = self.store.version(for: provider)
-        var versionText = version ?? "not detected"
+        var versionText = version ?? self.l10n.choose("not detected", "未検出")
         if provider == .claude, let parenRange = versionText.range(of: "(") {
             versionText = versionText[..<parenRange.lowerBound].trimmingCharacters(in: .whitespaces)
         }
 
         let usageText: String
         if let snapshot = self.store.snapshot(for: provider) {
-            let relative = snapshot.updatedAt.relativeDescription()
-            usageText = "usage fetched \(relative)"
+            let relative = snapshot.updatedAt.relativeDescription(language: self.settings.appLanguage)
+            usageText = self.l10n.choose("usage fetched \(relative)", "取得: \(relative)")
         } else if self.store.isStale(provider: provider) {
-            usageText = "last fetch failed"
+            usageText = self.l10n.choose("last fetch failed", "前回の取得に失敗")
         } else {
-            usageText = "usage not fetched yet"
+            usageText = self.l10n.choose("usage not fetched yet", "まだ取得していません")
         }
 
         if cliName == "codex" {
@@ -106,15 +109,15 @@ struct ProvidersPane: View {
 
         // Cursor is web-based, no CLI version to detect
         if provider == .cursor {
-            return "web • \(usageText)"
+            return "\(self.l10n.choose("web", "Web")) • \(usageText)"
         }
         if provider == .zai {
-            return "api • \(usageText)"
+            return "\(self.l10n.choose("api", "API")) • \(usageText)"
         }
 
         var detail = "\(cliName) \(versionText) • \(usageText)"
         if provider == .antigravity {
-            detail += " • experimental"
+            detail += " • \(self.l10n.choose("experimental", "実験的"))"
         }
         return detail
     }
@@ -122,40 +125,43 @@ struct ProvidersPane: View {
     private func providerSourceLabel(_ provider: UsageProvider) -> String {
         switch provider {
         case .codex:
-            return "auto"
+            return self.l10n.choose("auto", "自動")
         case .claude:
             if self.settings.debugMenuEnabled {
                 return self.settings.claudeUsageDataSource.rawValue
             }
-            return "auto"
+            return self.l10n.choose("auto", "自動")
         case .zai:
-            return "api"
+            return self.l10n.choose("api", "API")
         case .cursor:
-            return "web"
+            return self.l10n.choose("web", "Web")
         case .gemini:
-            return "api"
+            return self.l10n.choose("api", "API")
         case .antigravity:
-            return "local"
+            return self.l10n.choose("local", "ローカル")
         case .factory:
-            return "web"
+            return self.l10n.choose("web", "Web")
         }
     }
 
     private func providerStatusLabel(_ provider: UsageProvider) -> String {
         if let snapshot = self.store.snapshot(for: provider) {
-            return snapshot.updatedAt.formatted(date: .abbreviated, time: .shortened)
+            return snapshot.updatedAt.formatted(
+                Date.FormatStyle(date: .abbreviated, time: .shortened)
+                    .locale(self.l10n.locale))
         }
         if self.store.isStale(provider: provider) {
-            return "failed"
+            return self.l10n.choose("failed", "失敗")
         }
-        return "not yet"
+        return self.l10n.choose("not yet", "未取得")
     }
 
     private func providerErrorDisplay(_ provider: UsageProvider) -> ProviderErrorDisplay? {
         guard self.store.isStale(provider: provider), let raw = self.store.error(for: provider) else { return nil }
+        let localized = self.external.localizedErrorMessage(raw)
         return ProviderErrorDisplay(
-            preview: self.truncated(raw, prefix: ""),
-            full: raw)
+            preview: self.truncated(localized, prefix: ""),
+            full: localized)
     }
 
     private func extraSettingsToggles(for provider: UsageProvider) -> [ProviderSettingsToggleDescriptor] {
@@ -177,6 +183,7 @@ struct ProvidersPane: View {
             provider: provider,
             settings: self.settings,
             store: self.store,
+            language: self.settings.appLanguage,
             boolBinding: { keyPath in
                 Binding(
                     get: { self.settings[keyPath: keyPath] },
@@ -254,6 +261,7 @@ struct ProvidersPane: View {
 @MainActor
 private struct ProviderListView: View {
     let providers: [UsageProvider]
+    let language: AppLanguage
     @Bindable var store: UsageStore
     let isEnabled: (UsageProvider) -> Binding<Bool>
     let subtitle: (UsageProvider) -> String
@@ -273,6 +281,7 @@ private struct ProviderListView: View {
                     ProviderListProviderRowView(
                         provider: provider,
                         store: self.store,
+                        language: self.language,
                         isEnabled: self.isEnabled(provider),
                         subtitle: self.subtitle(provider),
                         sourceLabel: self.sourceLabel(provider),
@@ -330,6 +339,7 @@ private struct ProviderListBrandIcon: View {
 private struct ProviderListProviderRowView: View {
     let provider: UsageProvider
     @Bindable var store: UsageStore
+    let language: AppLanguage
     @Binding var isEnabled: Bool
     let subtitle: String
     let sourceLabel: String
@@ -339,6 +349,8 @@ private struct ProviderListProviderRowView: View {
     let onCopyError: (String) -> Void
 
     var body: some View {
+        let l10n = AppLocalization(language: self.language)
+        let external = ExternalTextLocalizer(language: self.language)
         let titleIndent = ProviderListMetrics.iconSize + 8
         let isRefreshing = self.store.refreshingProviders.contains(self.provider)
 
@@ -353,7 +365,7 @@ private struct ProviderListProviderRowView: View {
                     HStack(spacing: 8) {
                         ProviderListBrandIcon(provider: self.provider)
                             .padding(.top, 1)
-                        Text(self.store.metadata(for: self.provider).displayName)
+                        Text(external.providerName(self.provider))
                             .font(.subheadline.bold())
                     }
                     Text(self.subtitle)
@@ -366,7 +378,7 @@ private struct ProviderListProviderRowView: View {
                         if isRefreshing {
                             ProgressView()
                                 .controlSize(.small)
-                            Text("Refreshing…")
+                            Text(l10n.choose("Refreshing…", "更新中…"))
                         } else {
                             Text(self.statusLabel)
                         }
@@ -380,7 +392,10 @@ private struct ProviderListProviderRowView: View {
 
                 if let errorDisplay {
                     ProviderErrorView(
-                        title: "Last \(self.store.metadata(for: self.provider).displayName) fetch failed:",
+                        title: l10n.choose(
+                            "Last \(external.providerName(self.provider)) fetch failed:",
+                            "前回の\(external.providerName(self.provider))取得に失敗:"),
+                        language: self.language,
                         display: errorDisplay,
                         isExpanded: self.$isErrorExpanded,
                         onCopy: { self.onCopyError(errorDisplay.full) })
@@ -533,11 +548,13 @@ private struct ProviderErrorDisplay: Sendable {
 @MainActor
 private struct ProviderErrorView: View {
     let title: String
+    let language: AppLanguage
     let display: ProviderErrorDisplay
     @Binding var isExpanded: Bool
     let onCopy: () -> Void
 
     var body: some View {
+        let l10n = AppLocalization(language: self.language)
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(self.title)
@@ -551,7 +568,7 @@ private struct ProviderErrorView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .help("Copy error")
+                .help(l10n.choose("Copy error", "エラーをコピー"))
             }
 
             Text(self.display.preview)
@@ -561,7 +578,10 @@ private struct ProviderErrorView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             if self.display.preview != self.display.full {
-                Button(self.isExpanded ? "Hide details" : "Show details") { self.isExpanded.toggle() }
+                Button(self.isExpanded
+                    ? l10n.choose("Hide details", "詳細を隠す")
+                    : l10n.choose("Show details", "詳細を表示"))
+                { self.isExpanded.toggle() }
                     .buttonStyle(.link)
                     .font(.footnote)
             }

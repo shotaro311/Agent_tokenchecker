@@ -14,4 +14,15 @@ public enum ClaudeUsageDataSource: String, CaseIterable, Identifiable, Sendable 
         case .cli: "CLI (PTY)"
         }
     }
+
+    public func displayName(language: AppLanguage) -> String {
+        switch self {
+        case .oauth:
+            language == .japanese ? "OAuth API" : "OAuth API"
+        case .web:
+            language == .japanese ? "Web API（Cookie）" : "Web API (cookies)"
+        case .cli:
+            language == .japanese ? "CLI（PTY）" : "CLI (PTY)"
+        }
+    }
 }

@@ -22,13 +22,16 @@ struct ZaiProviderImplementation: ProviderImplementation {
 
     @MainActor
     func settingsFields(context: ProviderSettingsContext) -> [ProviderSettingsFieldDescriptor] {
-        [
+        let l10n = context.localization
+        return [
             ProviderSettingsFieldDescriptor(
                 id: "zai-api-token",
-                title: "API token",
-                subtitle: "Stored in Keychain. Paste the token from the z.ai dashboard.",
+                title: l10n.choose("API token", "APIトークン"),
+                subtitle: l10n.choose(
+                    "Stored in Keychain. Paste the token from the z.ai dashboard.",
+                    "キーチェーンに保存されます。z.aiのダッシュボードでトークンを取得して貼り付けてください。"),
                 kind: .secure,
-                placeholder: "Paste token…",
+                placeholder: l10n.choose("Paste token…", "トークンを貼り付け…"),
                 binding: context.stringBinding(\.zaiAPIToken),
                 actions: [],
                 isVisible: nil),

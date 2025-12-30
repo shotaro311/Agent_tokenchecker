@@ -1,77 +1,77 @@
 ---
-summary: "Cursor support in CodexBar: cookie-based API fetching and UX."
+summary: "CodexBarにおけるCursor対応：CookieベースのAPI取得とUX。"
 read_when:
-  - Debugging Cursor usage parsing
-  - Adjusting Cursor provider UI/menu behavior
-  - Troubleshooting cookie import issues
+  - Cursor使用量の解析をデバッグするとき
+  - CursorプロバイダのUI/メニュー挙動を調整するとき
+  - Cookie取り込みの問題を調査するとき
 ---
 
-# Cursor support (CodexBar)
+# Cursor対応（CodexBar）
 
-Cursor support is implemented: CodexBar can show Cursor usage alongside other providers. Unlike CLI-based providers, Cursor uses web-based cookie authentication.
+Cursorは実装済みで、CodexBarは他のプロバイダと並べてCursorの使用量を表示できます。CLIベースのプロバイダとは違い、CursorはWebベースのCookie認証を使います。
 
 ## UX
-- Settings → Providers: toggle for "Show Cursor usage".
-- No CLI detection required; works if browser cookies are available.
-- Menu: shows plan usage, on-demand usage, and billing cycle reset time.
+- 設定 → プロバイダ: 「Cursorの使用量を表示」トグル。
+- CLI検出は不要。ブラウザCookieがあれば動作します。
+- メニュー: プラン使用量、オンデマンド使用量、請求サイクルのリセット時刻を表示します。
 
-### Cursor menu-bar icon
-- Uses the same two-bar metaphor as other providers.
-- Brand color: teal (#00BFA5).
+### Cursorのメニューバーアイコン
+- 他のプロバイダと同じ2本バーのメタファを使用。
+- ブランドカラー: ティール（#00BFA5）。
 
-## Data path (Cursor)
+## データ経路（Cursor）
 
-### How we fetch usage (cookie-based)
+### 使用量取得の方法（Cookieベース）
 
-1. **Primary: Browser cookie import**
-   - Safari: reads `~/Library/Cookies/Cookies.binarycookies`
-   - Chrome: reads encrypted SQLite cookie DB from `~/Library/Application Support/Google/Chrome/*/Cookies`
-   - Firefox: reads SQLite cookie DB from `~/Library/Application Support/Firefox/Profiles/*/cookies.sqlite`
-   - Requires cookies for `cursor.com` + `cursor.sh` domains
+1. **主要: ブラウザCookie取り込み**
+   - Safari: `~/Library/Cookies/Cookies.binarycookies`
+   - Chrome: `~/Library/Application Support/Google/Chrome/*/Cookies` の暗号化SQLite
+   - Firefox: `~/Library/Application Support/Firefox/Profiles/*/cookies.sqlite`
+   - `cursor.com` と `cursor.sh` のCookieが必要
 
-2. **Fallback: Stored session**
-   - If browser cookies unavailable, uses session stored via "Add Account" login flow
-   - WebKit-based browser window captures cookies after successful login
-   - Session persisted to `~/Library/Application Support/CodexBar/cursor-session.json`
+2. **フォールバック: 保存済みセッション**
+   - ブラウザCookieが無い場合、「アカウント追加」ログインフローで保存されたセッションを使用
+   - WebKitベースのブラウザウィンドウでログイン後にCookieを取得
+   - セッションは `~/Library/Application Support/CodexBar/cursor-session.json` に保存
 
-### API endpoints used
-- `GET /api/usage-summary` — plan usage, on-demand usage, billing cycle
-- `GET /api/auth/me` — user email and name
+### 使用するAPIエンドポイント
+- `GET /api/usage-summary` — プラン使用量、オンデマンド使用量、請求サイクル
+- `GET /api/auth/me` — ユーザーのメールアドレスと名前
 
-### What we display
-- **Plan**: included usage percentage with reset countdown
-- **On-Demand**: usage beyond included plan limits (when applicable)
-- **Account**: email and membership type (Pro, Enterprise, Team, Hobby)
+### 表示内容
+- **プラン**: 含まれる使用量の割合とリセットまでのカウントダウン
+- **オンデマンド**: プラン上限を超えた使用量（該当時）
+- **アカウント**: メールアドレスとメンバーシップ種別（Pro / Enterprise / Team / Hobby）
 
-## Cookie import details
+## Cookie取り込みの詳細
 
 ### Safari
-- Parses `binarycookies` format (big-endian header, little-endian pages)
-- May require Full Disk Access permission
+- `binarycookies` 形式を解析（ビッグエンディアンのヘッダ + リトルエンディアンのページ）
+- フルディスクアクセスの許可が必要な場合があります
 
 ### Chrome
-- Decrypts cookies using "Chrome Safe Storage" key from macOS Keychain
-- Prompts for Keychain access on first use
-- Supports multiple Chrome profiles
+- macOS Keychainの「Chrome Safe Storage」キーでCookieを復号
+- 初回はKeychainアクセスの許可を求められます
+- 複数のChromeプロファイルに対応
 
 ### Firefox
-- Reads `cookies.sqlite` (no Keychain prompt)
-- Supports multiple Firefox profiles
+- `cookies.sqlite` を読み込み（Keychainプロンプトなし）
+- 複数のFirefoxプロファイルに対応
 
-## Notes
-- No CLI required: Cursor is entirely web-based.
-- Session cookies typically valid for extended periods; re-login rarely needed.
-- Provider identity stays siloed: Cursor email/plan never leak into other providers.
+## 注意点
+- CLIは不要。Cursorは完全にWebベースです。
+- セッションCookieは通常長期間有効で、再ログインは稀です。
+- 識別情報は分離: Cursorのメール/プランは他のプロバイダに漏れません。
 
-## Debugging tips
-- Check browser login: visit `https://cursor.com/dashboard` in Safari/Chrome/Firefox to verify signed-in state.
-- Safari cookie permission: System Settings → Privacy & Security → Full Disk Access → enable CodexBar.
-- Chrome Keychain prompt: allow CodexBar to access "Chrome Safe Storage" when prompted.
-- Settings → Providers shows the last fetch error inline under the Cursor toggle.
-- "Add Account" opens a WebKit browser window for manual login if cookie import fails.
+## デバッグのヒント
+- ブラウザログイン確認: Safari/Chrome/Firefox で `https://cursor.com/dashboard` を開き、サインイン状態を確認。
+- SafariのCookie権限: システム設定 → プライバシーとセキュリティ → フルディスクアクセス → CodexBarを有効化。
+- ChromeのKeychainプロンプト: 「Chrome Safe Storage」へのアクセスを許可。
+- 設定 → プロバイダで、Cursorトグルの下に最新エラーが表示されます。
+- Cookie取り込みに失敗した場合、「アカウント追加」でWebKitログインを開きます。
 
-## Membership types
-| API value | Display |
+## メンバーシップ種別
+| API値 | 表示 |
 |-----------|---------|
 | `pro` | Cursor Pro |
 | `hobby` | Cursor Hobby |

@@ -1,70 +1,70 @@
 ---
-summary: "CodexBar release checklist: package, sign, notarize, appcast, and asset validation."
+summary: "CodexBarリリースチェックリスト：パッケージング、署名、ノータライズ、appcast、アセット検証。"
 read_when:
-  - Starting a CodexBar release
-  - Updating signing/notarization or appcast steps
-  - Validating release assets or Sparkle feed
+  - CodexBarのリリースを開始するとき
+  - 署名/ノータライズやappcast手順を更新するとき
+  - リリースアセットやSparkleフィードを検証するとき
 ---
 
-# Release process (CodexBar)
+# リリース手順（CodexBar）
 
-SwiftPM-only; package/sign/notarize manually (no Xcode project). Sparkle feed is served from GitHub Releases. Checklist below merges Trimmy’s release flow with CodexBar specifics.
+SwiftPMのみ。パッケージ/署名/ノータライズは手動（Xcodeプロジェクトなし）。SparkleフィードはGitHub Releasesから配信します。チェックリストはTrimmyのリリースフローにCodexBar固有の内容を統合しています。
 
-**Must read first:** open the master macOS release guide at `~/Projects/agent-scripts/docs/RELEASING-MAC.md` alongside this file and reconcile any differences in favor of CodexBar specifics before starting a release.
+**必読:** まず `~/Projects/agent-scripts/docs/RELEASING-MAC.md` のmacOSリリースガイドを本ファイルと並行で開き、CodexBar固有の内容を優先して差分を解消してから開始してください。
 
-## Expectations
-- When someone says “release CodexBar”, do the entire end-to-end flow: bump versions/CHANGELOG, build, sign and notarize, upload the zip to the GitHub release, generate/update the appcast with the new signature, publish the tag/release, and verify the enclosure URL responds with 200/OK and installs via Sparkle (no 404s or stale feeds).
+## 期待値
+- 「CodexBarをリリースして」と言われたら、エンドツーエンドで完遂する: バージョン/CHANGELOG更新、ビルド、署名/ノータライズ、GitHubリリースにzipアップロード、appcast生成/更新（新しい署名込み）、タグ/リリース公開、enclosure URLの200/OK確認、Sparkleでインストール確認（404や古いフィードは不可）。
 
-### Release automation notes (Scripts/release.sh)
-- Always forces a fresh build/notarization (no cached artifacts) before publishing.
-- Fails fast if: git tree is dirty, the top changelog section is still “Unreleased” or mismatched, the target version already exists in the appcast, or the build number is not greater than the latest appcast entry.
-- Sparkle key probe runs up front; appcast entry + signature verified automatically after generation.
-- Release notes are extracted directly from the current changelog section and passed to the GitHub release (no manual notes flag needed).
-- Sparkle appcast notes are generated as HTML from the same changelog section and embedded into the appcast entry.
-- Requires tools/env on PATH: `swiftformat`, `swiftlint`, `swift`, `sign_update`, `generate_appcast`, `gh`, `python3`, `zip`, `curl`, plus `APP_STORE_CONNECT_*` and `SPARKLE_PRIVATE_KEY_FILE`.
+### リリース自動化メモ（Scripts/release.sh）
+- 公開前に必ずフレッシュビルド/ノータライズを実行（キャッシュ成果物は使わない）。
+- 次の場合は即失敗: gitが汚れている／CHANGELOG先頭が「Unreleased」／appcastに同じバージョンがある／ビルド番号がappcast最新より大きくない。
+- Sparkleキーの事前検証を実施。appcastエントリ + 署名も生成後に自動検証。
+- リリースノートは現行CHANGELOGセクションから自動抽出し、GitHubリリースに渡す（手動指定不要）。
+- Sparkleのappcastノートは同じCHANGELOGセクションからHTML生成し、エントリに埋め込み。
+- 必要ツール/環境変数: `swiftformat`, `swiftlint`, `swift`, `sign_update`, `generate_appcast`, `gh`, `python3`, `zip`, `curl`, と `APP_STORE_CONNECT_*`, `SPARKLE_PRIVATE_KEY_FILE`。
 
-## Prereqs
-- Xcode 26+ installed at `/Applications/Xcode.app` (for ictool/iconutil and SDKs).
-- Developer ID Application cert installed: `Developer ID Application: Peter Steinberger (Y5PE65HELJ)`.
-- ASC API creds in env: `APP_STORE_CONNECT_API_KEY_P8`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`.
-- Sparkle keys: public key already in Info.plist; private key path set via `SPARKLE_PRIVATE_KEY_FILE` when generating appcast.
-- Ensure shell has release env vars loaded (usually `source ~/.profile`) before running `Scripts/release.sh`.
+## 前提
+- Xcode 26+ が `/Applications/Xcode.app` にインストール済み（ictool/iconutil とSDK）。
+- Developer ID Application証明書がインストール済み: `Developer ID Application: Peter Steinberger (Y5PE65HELJ)`。
+- ASC API資格情報が環境変数に設定済み: `APP_STORE_CONNECT_API_KEY_P8`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`。
+- Sparkleキー: 公開鍵はInfo.plistに設定済み。appcast生成時は `SPARKLE_PRIVATE_KEY_FILE` に秘密鍵パスを設定。
+- `Scripts/release.sh` を動かす前にシェルへ環境変数を読み込む（通常 `source ~/.profile`）。
 
-## Icon (glass .icon → .icns)
+## アイコン（glass .icon → .icns）
 ```
 ./Scripts/build_icon.sh Icon.icon CodexBar
 ```
-Uses Xcode’s `ictool` + transparent padding + iconset → Icon.icns.
+Xcodeの `ictool` + 透明パディング + iconset → Icon.icns。
 
-## Build, sign, notarize (arm64)
+## ビルド/署名/ノータライズ（arm64）
 ```
 ./Scripts/sign-and-notarize.sh
 ```
-What it does:
+処理内容:
 - `swift build -c release --arch arm64`
-- Packages `CodexBar.app` with Info.plist and Icon.icns
-- Embeds Sparkle.framework, Updater, Autoupdate, XPCs
-- Codesigns **everything** with runtime + timestamp (deep) and adds rpath
-- Zips to `CodexBar-<version>.zip`
-- Submits to notarytool, waits, staples, validates
+- Info.plistとIcon.icnsを含めて `CodexBar.app` を作成
+- Sparkle.framework / Updater / Autoupdate / XPC を埋め込み
+- すべてをruntime + timestamp付きでcodesign（deep）し、rpathを追加
+- `CodexBar-<version>.zip` を作成
+- notarytoolに送信 → 待機 → ステープル → 検証
 
-Gotchas fixed:
-- Sparkle needs signing for framework, Autoupdate, Updater, XPCs (Downloader/Installer) or notarization fails.
-- Use `--timestamp` and `--deep` when signing the app to avoid invalid signature errors.
-- Avoid `unzip` — it can add AppleDouble `._*` files that break the sealed signature and trigger “app is damaged”. Use Finder or `ditto -x -k CodexBar-<ver>.zip /Applications`. If Gatekeeper complains, delete the app bundle, re-extract with `ditto`, then `spctl -a -t exec` to verify.
-- Manual sanity check before uploading: `find CodexBar.app -name '._*'` should return nothing; then `spctl --assess --type execute --verbose CodexBar.app` and `codesign --verify --deep --strict --verbose CodexBar.app` should both pass on the packaged bundle.
+注意点（解決済みの罠）:
+- Sparkleはframework/Autoupdate/Updater/XPC（Downloader/Installer）を署名しないとノータライズに失敗。
+- アプリ署名時に `--timestamp` と `--deep` を使用して署名エラーを回避。
+- `unzip` はAppleDouble `._*` を作る可能性があり署名破損で「アプリが壊れています」が出る。Finderか `ditto -x -k CodexBar-<ver>.zip /Applications` を使用。Gatekeeperが警告する場合はアプリを削除して `ditto` で再展開し、`spctl -a -t exec` で検証。
+- アップロード前の簡易チェック: `find CodexBar.app -name '._*'` が空であること。`spctl --assess --type execute --verbose CodexBar.app` と `codesign --verify --deep --strict --verbose CodexBar.app` がパッケージ済みバンドルで通ること。
 
-## Appcast (Sparkle)
-After notarization:
+## Appcast（Sparkle）
+ノータライズ後:
 ```
 SPARKLE_PRIVATE_KEY_FILE=/path/to/ed25519-priv.key \
 ./Scripts/make_appcast.sh CodexBar-0.1.0.zip \
   https://raw.githubusercontent.com/steipete/CodexBar/main/appcast.xml
-Generates HTML release notes from `CHANGELOG.md` (via `Scripts/changelog-to-html.sh`) and embeds them into the appcast entry.
 ```
-Uploads not handled automatically—commit/publish appcast + zip to the feed location (GitHub Releases/raw URL).
+`CHANGELOG.md` からHTMLリリースノートを生成し（`Scripts/changelog-to-html.sh`）、appcastエントリに埋め込みます。
+アップロードは自動化されていません。appcast + zip をフィードの場所へコミット/公開してください（GitHub Releases / raw URL）。
 
-## Tag & release
+## タグ & リリース
 ```
 git tag v<version>
 ./Scripts/make_appcast.sh ...
@@ -72,49 +72,47 @@ git tag v<version>
 # then create GitHub release (gh release create v<version> ...)
 ```
 
-## Homebrew (Cask)
-CodexBar ships a Homebrew **Cask** in `../homebrew-tap`. When installed via Homebrew, CodexBar disables Sparkle and the app
-must be updated via `brew`.
+## Homebrew（Cask）
+CodexBarは `../homebrew-tap` にHomebrew **Cask** を提供します。Homebrewインストール時はSparkleを無効化するため、更新は `brew` で行います。
 
-After publishing the GitHub release, update the tap cask (see `docs/releasing-homebrew.md`).
+GitHubリリース公開後、tap caskを更新（`docs/releasing-homebrew.md` を参照）。
 
-## Checklist (quick)
-- [ ] Read both this file and `~/Projects/agent-scripts/docs/RELEASING-MAC.md`; resolve any conflicts toward CodexBar’s specifics.
-- [ ] Update versions (scripts/Info.plist, CHANGELOG, About text) — changelog top section must be finalized; release script pulls notes from it automatically.
-- [ ] `swiftformat`, `swiftlint`, `swift test` (zero warnings/errors)
-- [ ] `./Scripts/build_icon.sh` if icon changed
+## チェックリスト（簡易）
+- [ ] 本ファイルと `~/Projects/agent-scripts/docs/RELEASING-MAC.md` を読んだ上で、差分はCodexBarの内容を優先して解消。
+- [ ] バージョン更新（scripts/Info.plist, CHANGELOG, About文言）— 先頭のCHANGELOGは確定済みであること（リリーススクリプトが自動取得）。
+- [ ] `swiftformat`, `swiftlint`, `swift test`（警告/エラーなし）
+- [ ] アイコン変更時は `./Scripts/build_icon.sh`
 - [ ] `./Scripts/sign-and-notarize.sh`
-- [ ] Generate Sparkle appcast with private key
-  - Sparkle ed25519 private key path: `/Users/steipete/Library/CloudStorage/Dropbox/Backup/Sparkle/sparkle-private-key-KEEP-SECURE.txt` (primary) and `/Users/steipete/Library/CloudStorage/Dropbox/Backup/Sparkle-VibeTunnel/sparkle-private-key-KEEP-SECURE.txt` (older backup)
-  - Upload the dSYM archive alongside the app zip on the GitHub release; the release script now automates this and will fail if it’s missing.
-  - After publishing the release, run `Scripts/check-release-assets.sh <tag>` to confirm both the app zip and dSYM zip are present on GitHub.
-  - Generate the appcast + HTML release notes: `./Scripts/make_appcast.sh CodexBar-<ver>.zip https://raw.githubusercontent.com/steipete/CodexBar/main/appcast.xml`
-  - Verify the enclosure signature + size: `SPARKLE_PRIVATE_KEY_FILE=... ./Scripts/verify_appcast.sh <ver>`
-- [ ] Upload zip + appcast to feed; publish tag + GitHub release so Sparkle URL is live (avoid 404)
-- [ ] Homebrew tap: update `../homebrew-tap/Casks/codexbar.rb` (url + sha256), then verify:
+- [ ] Sparkle appcastを秘密鍵で生成
+  - Sparkle ed25519秘密鍵パス: `/Users/steipete/Library/CloudStorage/Dropbox/Backup/Sparkle/sparkle-private-key-KEEP-SECURE.txt`（主）と `/Users/steipete/Library/CloudStorage/Dropbox/Backup/Sparkle-VibeTunnel/sparkle-private-key-KEEP-SECURE.txt`（古いバックアップ）
+  - dSYMアーカイブをアプリzipと一緒にGitHubリリースへアップロード（リリーススクリプトが自動化、未アップロードだと失敗）。
+  - 公開後に `Scripts/check-release-assets.sh <tag>` でアプリzipとdSYM zipが揃っていることを確認。
+  - appcast + HTMLリリースノート生成: `./Scripts/make_appcast.sh CodexBar-<ver>.zip https://raw.githubusercontent.com/steipete/CodexBar/main/appcast.xml`
+  - enclosure署名 + サイズ確認: `SPARKLE_PRIVATE_KEY_FILE=... ./Scripts/verify_appcast.sh <ver>`
+- [ ] zip + appcast をフィードにアップロードし、タグ + GitHubリリースを公開（Sparkle URLが生きていること）
+- [ ] Homebrew tap: `../homebrew-tap/Casks/codexbar.rb` を更新（url + sha256）、その後確認:
   - `brew uninstall --cask codexbar || true`
   - `brew untap steipete/tap || true; brew tap steipete/tap`
   - `brew install --cask steipete/tap/codexbar && open -a CodexBar`
-- [ ] Version continuity: confirm the new version is the immediate next patch/minor (no gaps) and CHANGELOG has no skipped numbers (e.g., after 0.2.0 use 0.2.1, not 0.2.2)
-- [ ] Changelog sanity: single top-level title, no duplicate version sections, versions strictly descending with no repeats
-- [ ] Release pages: title format `CodexBar <version>`, notes as Markdown list (no stray blank lines)
-- [ ] Changelog/release notes are user-facing: avoid internal-only bullets (build numbers, script bumps) and keep entries concise
-- [ ] Download uploaded `CodexBar-<ver>.zip`, unzip via `ditto`, run, and verify signature (`spctl -a -t exec -vv CodexBar.app` + `stapler validate`)
-- [ ] Confirm `appcast.xml` points to the new zip/version and renders the HTML release notes (not escaped tags)
-- [ ] Verify on GitHub Releases: assets present (zip, appcast), release notes match changelog, version/tag correct
-- [ ] Open the appcast URL in browser to confirm the new entry is visible and enclosure URL is reachable
-- [ ] Manually visit the enclosure URL (curl -I) to ensure 200/OK (no 404) after publishing assets/release
-- [ ] Ensure `sparkle:edSignature` is present for the enclosure in appcast (generated by `generate_appcast` with the ed25519 key)
-- [ ] When creating the GitHub release, paste the CHANGELOG entry as Markdown list (one `-` per line, blank line between sections); visually confirm bullets render correctly after publishing
-- [ ] Keep a previous signed build in `/Applications/CodexBar.app` to test Sparkle delta/full update to the new release
-- [ ] Manual Gatekeeper sanity: after packaging, `find CodexBar.app -name '._*'` is empty, `spctl --assess --type execute --verbose CodexBar.app` and `codesign --verify --deep --strict --verbose CodexBar.app` succeed
-- [ ] For Sparkle verification: if replacing `/Applications/CodexBar.app`, quit first, replace, relaunch, and test update
-- **Definition of “done” for a release:** all of the above are complete, the appcast/enclosure link resolves, Homebrew cask
-  installs, and a previous public build can update to the new one via Sparkle. Anything short of that is not a finished release.
+- [ ] バージョン連続性: 新しいバージョンが連番であること（例: 0.2.0 の次は 0.2.1、0.2.2は飛ばさない）
+- [ ] CHANGELOGの整合性: タイトルが1つ、重複バージョンなし、降順で連番
+- [ ] リリースページ: タイトル形式 `CodexBar <version>`、ノートはMarkdownの箇条書き（余計な空行なし）
+- [ ] CHANGELOG/リリースノートはユーザー向け（内部のみの項目は避け、簡潔に）
+- [ ] `CodexBar-<ver>.zip` をダウンロードして `ditto` で展開し実行、署名確認（`spctl -a -t exec -vv CodexBar.app` + `stapler validate`）
+- [ ] `appcast.xml` が新しいzip/バージョンを指し、HTMLリリースノートがエスケープされず表示されること
+- [ ] GitHub Releasesでアセット（zip/appcast）とノート、バージョン/タグの一致を確認
+- [ ] appcast URLをブラウザで開き、新しいエントリが見えることとenclosure URLが到達できることを確認
+- [ ] enclosure URLを `curl -I` で手動確認し、200/OK であることを確認
+- [ ] appcastのenclosureに `sparkle:edSignature` が含まれていること（`generate_appcast` による生成）
+- [ ] GitHubリリース作成時、CHANGELOGエントリをMarkdownの箇条書きで貼り付け（1行1`-`、セクション間は空行）。公開後に表示崩れがないことを確認
+- [ ] 以前の署名済みビルドを `/Applications/CodexBar.app` に残し、Sparkleの差分/フル更新をテスト
+- [ ] Gatekeeperの手動チェック: パッケージ後に `find CodexBar.app -name '._*'` が空、`spctl --assess --type execute --verbose CodexBar.app` と `codesign --verify --deep --strict --verbose CodexBar.app` が成功
+- [ ] Sparkle検証: `/Applications/CodexBar.app` を置き換える場合は終了→置換→再起動→更新テスト
+- **リリース完了の定義:** 上記がすべて完了し、appcast/enclosureリンクが解決し、Homebrew caskがインストールでき、既存の公開ビルドからSparkleで更新できること。これに満たない状態は完了ではない。
 
-## Troubleshooting
-- **White plate icon**: regenerate icns via `build_icon.sh` (ictool) to ensure transparent padding.
-- **Notarization invalid**: verify deep+timestamp signing, especially Sparkle’s Autoupdate/Updater and XPCs; rerun package + sign-and-notarize.
-- **App won’t launch**: ensure Sparkle.framework is embedded under `Contents/Frameworks` and rpath added; codesign deep.
-- **App “damaged” dialog after unzip**: re-extract with `ditto -x -k`, removing any `._*` files, then re-verify with `spctl`.
-- **Update download fails (404)**: ensure the release asset referenced in appcast exists and is published in the corresponding GitHub release; verify with `curl -I <enclosure-url>`.
+## トラブルシューティング
+- **白いプレートのアイコン**: `build_icon.sh`（ictool）でicnsを再生成し、透明パディングを確認。
+- **ノータライズ無効**: deep + timestamp署名を検証（特にSparkleのAutoupdate/Updater/XPC）。再パッケージ + 再署名を実行。
+- **アプリが起動しない**: Sparkle.framework が `Contents/Frameworks` 配下にあり、rpathが設定済みか確認。codesign deep。
+- **展開後に「アプリが壊れています」**: `ditto -x -k` で再展開し `._*` を削除、`spctl` で再検証。
+- **更新のダウンロードが404**: appcastが参照するリリースアセットが存在/公開されているか確認し、`curl -I <enclosure-url>` で検証。

@@ -1,28 +1,28 @@
 ---
-summary: "Homebrew Cask release steps for CodexBar (Sparkle-disabled builds)."
+summary: "CodexBarのHomebrew Caskリリース手順（Sparkle無効ビルド）。"
 read_when:
-  - Publishing a CodexBar release via Homebrew
-  - Updating the Homebrew tap cask definition
+  - Homebrew経由でCodexBarをリリースするとき
+  - Homebrew tapのcask定義を更新するとき
 ---
 
-# CodexBar Homebrew Release Playbook
+# CodexBar Homebrewリリース手順
 
-Homebrew is for the UI app via Cask. When installed via Homebrew, CodexBar disables Sparkle and shows a "update via brew" hint in About.
+HomebrewはCask経由でUIアプリを提供します。Homebrewインストール版ではSparkleを無効化し、Aboutに「brewで更新」の案内が表示されます。
 
-## Prereqs
-- Homebrew installed.
-- Access to the tap repo: `../homebrew-tap`.
+## 前提
+- Homebrewがインストール済み。
+- tapリポジトリへのアクセス: `../homebrew-tap`。
 
-## 1) Release CodexBar normally
-Follow `docs/RELEASING.md` to publish `CodexBar-<version>.zip` to GitHub Releases.
+## 1) 通常のCodexBarリリース
+`docs/RELEASING.md` に従い、`CodexBar-<version>.zip` をGitHub Releasesへ公開します。
 
-## 2) Update the Homebrew tap cask
-In `../homebrew-tap`, add/update the cask at `Casks/codexbar.rb`:
-- `url` points at the GitHub release asset: `.../releases/download/v<version>/CodexBar-<version>.zip`
-- Update `sha256` to match that zip.
-- Keep `depends_on arch: :arm64` and `depends_on macos: ">= :sequoia"` (CodexBar is macOS 15+).
+## 2) Homebrew tapのcask更新
+`../homebrew-tap` の `Casks/codexbar.rb` を追加/更新します:
+- `url` はGitHubのリリースアセットを指す: `.../releases/download/v<version>/CodexBar-<version>.zip`
+- `sha256` を対象zipに合わせる。
+- `depends_on arch: :arm64` と `depends_on macos: ">= :sequoia"` を維持（CodexBarはmacOS 15+）。
 
-## 3) Verify install
+## 3) インストール確認
 ```sh
 brew uninstall --cask codexbar || true
 brew untap steipete/tap || true
@@ -31,5 +31,5 @@ brew install --cask steipete/tap/codexbar
 open -a CodexBar
 ```
 
-## 4) Push tap changes
-Commit + push in the tap repo.
+## 4) tap変更の反映
+tapリポジトリでコミット + push。

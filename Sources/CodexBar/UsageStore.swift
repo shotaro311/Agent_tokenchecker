@@ -49,6 +49,7 @@ extension UsageStore {
     func observeSettingsChanges() {
         withObservationTracking {
             _ = self.settings.refreshFrequency
+            _ = self.settings.appLanguage
             _ = self.settings.statusChecksEnabled
             _ = self.settings.sessionQuotaNotificationsEnabled
             _ = self.settings.usageBarsShowUsed
@@ -85,14 +86,20 @@ enum ProviderStatusIndicator: String {
         }
     }
 
-    var label: String {
+    func label(language: AppLanguage) -> String {
         switch self {
-        case .none: "Operational"
-        case .minor: "Partial outage"
-        case .major: "Major outage"
-        case .critical: "Critical issue"
-        case .maintenance: "Maintenance"
-        case .unknown: "Status unknown"
+        case .none:
+            language == .japanese ? "正常稼働" : "Operational"
+        case .minor:
+            language == .japanese ? "一部障害" : "Partial outage"
+        case .major:
+            language == .japanese ? "大規模障害" : "Major outage"
+        case .critical:
+            language == .japanese ? "重大な障害" : "Critical issue"
+        case .maintenance:
+            language == .japanese ? "メンテナンス" : "Maintenance"
+        case .unknown:
+            language == .japanese ? "ステータス不明" : "Status unknown"
         }
     }
 }
@@ -1303,8 +1310,8 @@ extension UsageStore {
                 return
             }
             let duration = Date().timeIntervalSince(startedAt)
-            let sessionCost = snapshot.sessionCostUSD.map(UsageFormatter.usdString) ?? "—"
-            let monthCost = snapshot.last30DaysCostUSD.map(UsageFormatter.usdString) ?? "—"
+            let sessionCost = snapshot.sessionCostUSD.map { UsageFormatter.usdString($0, language: .english) } ?? "—"
+            let monthCost = snapshot.last30DaysCostUSD.map { UsageFormatter.usdString($0, language: .english) } ?? "—"
             let durationText = String(format: "%.2f", duration)
             let message =
                 "ccusage success provider=\(providerText) " +

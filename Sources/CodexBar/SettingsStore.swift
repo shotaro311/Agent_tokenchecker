@@ -22,13 +22,18 @@ enum RefreshFrequency: String, CaseIterable, Identifiable {
         }
     }
 
-    var label: String {
+    func label(language: AppLanguage) -> String {
         switch self {
-        case .manual: "Manual"
-        case .oneMinute: "1 min"
-        case .twoMinutes: "2 min"
-        case .fiveMinutes: "5 min"
-        case .fifteenMinutes: "15 min"
+        case .manual:
+            language == .japanese ? "手動" : "Manual"
+        case .oneMinute:
+            language == .japanese ? "1分" : "1 min"
+        case .twoMinutes:
+            language == .japanese ? "2分" : "2 min"
+        case .fiveMinutes:
+            language == .japanese ? "5分" : "5 min"
+        case .fifteenMinutes:
+            language == .japanese ? "15分" : "15 min"
         }
     }
 }
@@ -45,6 +50,15 @@ final class SettingsStore {
 
     var refreshFrequency: RefreshFrequency {
         didSet { self.userDefaults.set(self.refreshFrequency.rawValue, forKey: "refreshFrequency") }
+    }
+
+    var appLanguage: AppLanguage {
+        didSet {
+            self.userDefaults.set(self.appLanguage.rawValue, forKey: "appLanguage")
+            if self.syncAppLanguageToSharedStore {
+                AppLanguageStore.save(self.appLanguage)
+            }
+        }
     }
 
     var launchAtLogin: Bool {
@@ -170,6 +184,7 @@ final class SettingsStore {
     var menuObservationToken: Int {
         _ = self.providerOrderRaw
         _ = self.refreshFrequency
+        _ = self.appLanguage
         _ = self.launchAtLogin
         _ = self.debugMenuEnabled
         _ = self.statusChecksEnabled
@@ -194,17 +209,32 @@ final class SettingsStore {
     }
 
     @ObservationIgnored private let userDefaults: UserDefaults
+    @ObservationIgnored private let syncAppLanguageToSharedStore: Bool
     @ObservationIgnored private let toggleStore: ProviderToggleStore
     @ObservationIgnored private let zaiTokenStore: any ZaiTokenStoring
     @ObservationIgnored private var zaiTokenPersistTask: Task<Void, Never>?
     private var providerToggleRevision: Int = 0
 
-    init(userDefaults: UserDefaults = .standard, zaiTokenStore: any ZaiTokenStoring = KeychainZaiTokenStore()) {
+    init(
+        userDefaults: UserDefaults = .standard,
+        zaiTokenStore: any ZaiTokenStoring = KeychainZaiTokenStore(),
+        syncAppLanguageToSharedStore: Bool = true)
+    {
         self.userDefaults = userDefaults
         self.zaiTokenStore = zaiTokenStore
+        self.syncAppLanguageToSharedStore = syncAppLanguageToSharedStore
         self.providerOrderRaw = userDefaults.stringArray(forKey: "providerOrder") ?? []
         let raw = userDefaults.string(forKey: "refreshFrequency") ?? RefreshFrequency.fiveMinutes.rawValue
         self.refreshFrequency = RefreshFrequency(rawValue: raw) ?? .fiveMinutes
+        let languageRaw = userDefaults.string(forKey: "appLanguage")
+        let resolvedLanguage = AppLanguage(rawValue: languageRaw ?? "") ?? .japanese
+        self.appLanguage = resolvedLanguage
+        if languageRaw == nil {
+            self.userDefaults.set(resolvedLanguage.rawValue, forKey: "appLanguage")
+        }
+        if self.syncAppLanguageToSharedStore {
+            AppLanguageStore.save(resolvedLanguage)
+        }
         self.launchAtLogin = userDefaults.object(forKey: "launchAtLogin") as? Bool ?? false
         self.debugMenuEnabled = userDefaults.object(forKey: "debugMenuEnabled") as? Bool ?? false
         self.debugLoadingPatternRaw = userDefaults.string(forKey: "debugLoadingPattern")

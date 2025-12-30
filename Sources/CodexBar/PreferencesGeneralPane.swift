@@ -8,42 +8,67 @@ struct GeneralPane: View {
     @Bindable var store: UsageStore
 
     var body: some View {
+        let l10n = AppLocalization(language: self.settings.appLanguage)
         ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 16) {
                 SettingsSection(contentSpacing: 12) {
-                    Text("System")
+                    Text(l10n.choose("Language", "言語"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                    Picker("", selection: self.$settings.appLanguage) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.displayName).tag(language)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    Text(l10n.choose("Switch the app language.", "アプリの表示言語を切り替えます。"))
+                        .font(.footnote)
+                        .foregroundStyle(.tertiary)
+                }
+
+                Divider()
+
+                SettingsSection(contentSpacing: 12) {
+                    Text(l10n.choose("System", "システム"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
                     PreferenceToggleRow(
-                        title: "Start at Login",
-                        subtitle: "Automatically opens CodexBar when you start your Mac.",
+                        title: l10n.choose("Start at Login", "ログイン時に起動"),
+                        subtitle: l10n.choose(
+                            "Automatically opens CodexBar when you start your Mac.",
+                            "Macの起動時にCodexBarを自動で開きます。"),
                         binding: self.$settings.launchAtLogin)
                 }
 
                 Divider()
 
                 SettingsSection(contentSpacing: 12) {
-                    Text("Usage")
+                    Text(l10n.choose("Usage", "使用量"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
 
                     VStack(alignment: .leading, spacing: 5.4) {
                         Toggle(isOn: self.$settings.ccusageCostUsageEnabled) {
-                            Text("Show cost summary")
+                            Text(l10n.choose("Show cost summary", "コスト集計を表示"))
                                 .font(.body)
                         }
                         .toggleStyle(.checkbox)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Reads local usage logs. Shows today + last 30 days cost in the menu.")
+                            Text(l10n.choose(
+                                "Reads local usage logs. Shows today + last 30 days cost in the menu.",
+                                "ローカルの使用量ログを読み、今日と直近30日分のコストをメニューに表示します。"))
                                 .font(.footnote)
                                 .foregroundStyle(.tertiary)
                                 .fixedSize(horizontal: false, vertical: true)
 
                             if self.settings.ccusageCostUsageEnabled {
-                                Text("Auto-refresh: hourly · Timeout: 10m")
+                                Text(l10n.choose(
+                                    "Auto-refresh: hourly · Timeout: 10m",
+                                    "自動更新: 1時間ごと · タイムアウト: 10分"))
                                     .font(.footnote)
                                     .foregroundStyle(.tertiary)
 
@@ -57,28 +82,33 @@ struct GeneralPane: View {
                 Divider()
 
                 SettingsSection(contentSpacing: 12) {
-                    Text("Status")
+                    Text(l10n.choose("Status", "ステータス"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
                     PreferenceToggleRow(
-                        title: "Check provider status",
-                        subtitle: "Polls OpenAI/Claude status pages and Google Workspace for " +
-                            "Gemini/Antigravity, surfacing incidents in the icon and menu.",
+                        title: l10n.choose("Check provider status", "プロバイダのステータスを確認"),
+                        subtitle: l10n.choose(
+                            "Polls OpenAI/Claude status pages and Google Workspace for " +
+                                "Gemini/Antigravity, surfacing incidents in the icon and menu.",
+                            "OpenAI/ClaudeのステータスページとGoogle Workspaceを監視し、" +
+                                "Gemini/Antigravityの障害をアイコンとメニューに表示します。"),
                         binding: self.$settings.statusChecksEnabled)
                 }
 
                 Divider()
 
                 SettingsSection(contentSpacing: 12) {
-                    Text("Notifications")
+                    Text(l10n.choose("Notifications", "通知"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
                     PreferenceToggleRow(
-                        title: "Session quota notifications",
-                        subtitle: "Notifies when the 5-hour session quota hits 0% and when it becomes " +
-                            "available again.",
+                        title: l10n.choose("Session quota notifications", "セッション上限の通知"),
+                        subtitle: l10n.choose(
+                            "Notifies when the 5-hour session quota hits 0% and when it becomes " +
+                                "available again.",
+                            "5時間セッションの上限が0%になった時と、再び利用可能になった時に通知します。"),
                         binding: self.$settings.sessionQuotaNotificationsEnabled)
                 }
 
@@ -87,7 +117,7 @@ struct GeneralPane: View {
                 SettingsSection(contentSpacing: 12) {
                     HStack {
                         Spacer()
-                        Button("Quit CodexBar") { NSApp.terminate(nil) }
+                        Button(l10n.choose("Quit CodexBar", "CodexBarを終了")) { NSApp.terminate(nil) }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
                     }
@@ -100,24 +130,26 @@ struct GeneralPane: View {
     }
 
     private func costStatusLine(provider: UsageProvider) -> some View {
+        let l10n = AppLocalization(language: self.settings.appLanguage)
+        let external = ExternalTextLocalizer(language: self.settings.appLanguage)
         let name = switch provider {
         case .claude:
-            "Claude"
+            external.providerName(.claude)
         case .codex:
-            "Codex"
+            external.providerName(.codex)
         case .zai:
-            "z.ai"
+            external.providerName(.zai)
         case .gemini:
-            "Gemini"
+            external.providerName(.gemini)
         case .antigravity:
-            "Antigravity"
+            external.providerName(.antigravity)
         case .cursor:
-            "Cursor"
+            external.providerName(.cursor)
         case .factory:
-            "Droid"
+            external.providerName(.factory)
         }
         guard provider == .claude || provider == .codex else {
-            return Text("\(name): unsupported")
+            return Text(l10n.choose("\(name): unsupported", "\(name): 未対応"))
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
         }
@@ -129,21 +161,29 @@ struct GeneralPane: View {
                 let formatter = DateComponentsFormatter()
                 formatter.allowedUnits = seconds < 60 ? [.second] : [.minute, .second]
                 formatter.unitsStyle = .abbreviated
+                var calendar = Calendar.current
+                calendar.locale = l10n.locale
+                formatter.calendar = calendar
                 return formatter.string(from: seconds).map { " (\($0))" } ?? ""
             }()
-            return Text("\(name): fetching…\(elapsed)")
+            return Text(l10n.choose("\(name): fetching…\(elapsed)", "\(name): 取得中…\(elapsed)"))
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
         }
         if let snapshot = self.store.tokenSnapshot(for: provider) {
-            let updated = UsageFormatter.updatedString(from: snapshot.updatedAt)
-            let cost = snapshot.last30DaysCostUSD.map { UsageFormatter.usdString($0) } ?? "—"
-            return Text("\(name): \(updated) · 30d \(cost)")
+            let updated = UsageFormatter.updatedString(from: snapshot.updatedAt, language: self.settings.appLanguage)
+            let cost = snapshot.last30DaysCostUSD.map {
+                UsageFormatter.usdString($0, language: self.settings.appLanguage)
+            } ?? "—"
+            return Text(l10n.choose(
+                "\(name): \(updated) · 30d \(cost)",
+                "\(name): \(updated) · 30日 \(cost)"))
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
         }
         if let error = self.store.tokenError(for: provider), !error.isEmpty {
-            let truncated = UsageFormatter.truncatedSingleLine(error, max: 120)
+            let localizedError = external.localizedErrorMessage(error)
+            let truncated = UsageFormatter.truncatedSingleLine(localizedError, max: 120)
             return Text("\(name): \(truncated)")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
@@ -151,12 +191,13 @@ struct GeneralPane: View {
         if let lastAttempt = self.store.tokenLastAttemptAt(for: provider) {
             let rel = RelativeDateTimeFormatter()
             rel.unitsStyle = .abbreviated
+            rel.locale = l10n.locale
             let when = rel.localizedString(for: lastAttempt, relativeTo: Date())
-            return Text("\(name): last attempt \(when)")
+            return Text(l10n.choose("\(name): last attempt \(when)", "\(name): 最終試行 \(when)"))
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
         }
-        return Text("\(name): no data yet")
+        return Text(l10n.choose("\(name): no data yet", "\(name): まだデータがありません"))
             .font(.footnote)
             .foregroundStyle(.tertiary)
     }

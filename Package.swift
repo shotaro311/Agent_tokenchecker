@@ -10,6 +10,7 @@ let package = Package(
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.8.1"),
         .package(url: "https://github.com/steipete/Commander", from: "0.2.0"),
         .package(url: "https://github.com/apple/swift-log", from: "1.8.0"),
+        .package(url: "https://github.com/apple/swift-testing", from: "0.5.0"),
     ],
     targets: {
         var targets: [Target] = [
@@ -33,7 +34,11 @@ let package = Package(
                 ]),
         .testTarget(
             name: "CodexBarLinuxTests",
-            dependencies: ["CodexBarCore", "CodexBarCLI"],
+            dependencies: [
+                "CodexBarCore",
+                "CodexBarCLI",
+                .product(name: "Testing", package: "swift-testing"),
+            ],
             path: "TestsLinux",
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency"),
@@ -83,7 +88,12 @@ let package = Package(
 
         targets.append(.testTarget(
             name: "CodexBarTests",
-            dependencies: ["CodexBar", "CodexBarCore", "CodexBarCLI"],
+            dependencies: [
+                "CodexBar",
+                "CodexBarCore",
+                "CodexBarCLI",
+                .product(name: "Testing", package: "swift-testing"),
+            ],
             path: "Tests",
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency"),

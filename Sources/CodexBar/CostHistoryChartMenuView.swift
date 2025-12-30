@@ -24,20 +24,29 @@ struct CostHistoryChartMenuView: View {
     private let daily: [DailyEntry]
     private let totalCostUSD: Double?
     private let width: CGFloat
+    private let language: AppLanguage
     @State private var selectedDateKey: String?
 
-    init(provider: UsageProvider, daily: [DailyEntry], totalCostUSD: Double?, width: CGFloat) {
+    init(
+        provider: UsageProvider,
+        daily: [DailyEntry],
+        totalCostUSD: Double?,
+        width: CGFloat,
+        language: AppLanguage)
+    {
         self.provider = provider
         self.daily = daily
         self.totalCostUSD = totalCostUSD
         self.width = width
+        self.language = language
     }
 
     var body: some View {
+        let l10n = AppLocalization(language: self.language)
         let model = Self.makeModel(provider: self.provider, daily: self.daily)
         VStack(alignment: .leading, spacing: 10) {
             if model.points.isEmpty {
-                Text("No cost history data.")
+                Text(l10n.choose("No cost history data.", "コスト履歴がありません。"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
@@ -107,7 +116,8 @@ struct CostHistoryChartMenuView: View {
             }
 
             if let total = self.totalCostUSD {
-                Text("Total (30d): \(UsageFormatter.usdString(total))")
+                let totalText = UsageFormatter.usdString(total, language: self.language)
+                Text(l10n.choose("Total (30d): \(totalText)", "合計（30日）: \(totalText)"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -301,17 +311,21 @@ struct CostHistoryChartMenuView: View {
     }
 
     private func detailLines(model: Model) -> (primary: String, secondary: String?) {
+        let l10n = AppLocalization(language: self.language)
         guard let key = self.selectedDateKey,
               let point = model.pointsByDateKey[key],
               let date = Self.dateFromDayKey(key)
         else {
-            return ("Hover a bar for details", nil)
+            return (l10n.choose("Hover a bar for details", "バーにカーソルを合わせると詳細が表示されます"), nil)
         }
 
-        let dayLabel = date.formatted(.dateTime.month(.abbreviated).day())
-        let cost = UsageFormatter.usdString(point.costUSD)
+        let dayLabel = date.formatted(.dateTime.month(.abbreviated).day().locale(self.language.locale))
+        let cost = UsageFormatter.usdString(point.costUSD, language: self.language)
         if let tokens = point.totalTokens {
-            let primary = "\(dayLabel): \(cost) · \(UsageFormatter.tokenCountString(tokens)) tokens"
+            let tokenText = UsageFormatter.tokenCountString(tokens, language: self.language)
+            let primary = l10n.choose(
+                "\(dayLabel): \(cost) · \(tokenText) tokens",
+                "\(dayLabel): \(cost) · \(tokenText) トークン")
             let secondary = self.topModelsText(key: key, model: model)
             return (primary, secondary)
         }
@@ -321,6 +335,7 @@ struct CostHistoryChartMenuView: View {
     }
 
     private func topModelsText(key: String, model: Model) -> String? {
+        let l10n = AppLocalization(language: self.language)
         guard let entry = model.entriesByDateKey[key] else { return nil }
         guard let breakdown = entry.modelBreakdowns, !breakdown.isEmpty else { return nil }
         let parts = breakdown
@@ -333,8 +348,8 @@ struct CostHistoryChartMenuView: View {
                 return lhs.costUSD > rhs.costUSD
             }
             .prefix(3)
-            .map { "\($0.name) \(UsageFormatter.usdString($0.costUSD))" }
+            .map { "\($0.name) \(UsageFormatter.usdString($0.costUSD, language: self.language))" }
         guard !parts.isEmpty else { return nil }
-        return "Top: \(parts.joined(separator: " · "))"
+        return l10n.choose("Top: \(parts.joined(separator: " · "))", "上位: \(parts.joined(separator: " · "))")
     }
 }

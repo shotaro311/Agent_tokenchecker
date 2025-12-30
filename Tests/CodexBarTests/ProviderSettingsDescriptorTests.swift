@@ -11,7 +11,10 @@ struct ProviderSettingsDescriptorTests {
     func toggleIDsAreUniqueAcrossProviders() {
         let defaults = UserDefaults(suiteName: "ProviderSettingsDescriptorTests-unique")!
         defaults.removePersistentDomain(forName: "ProviderSettingsDescriptorTests-unique")
-        let settings = SettingsStore(userDefaults: defaults, zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
         let store = UsageStore(fetcher: UsageFetcher(environment: [:]), settings: settings)
 
         var statusByID: [String: String] = [:]
@@ -24,6 +27,7 @@ struct ProviderSettingsDescriptorTests {
                 provider: provider,
                 settings: settings,
                 store: store,
+                language: .english,
                 boolBinding: { keyPath in
                     Binding(
                         get: { settings[keyPath: keyPath] },
@@ -70,13 +74,17 @@ struct ProviderSettingsDescriptorTests {
     func codexDoesNotExposeOpenAIWebToggle() {
         let defaults = UserDefaults(suiteName: "ProviderSettingsDescriptorTests-codex")!
         defaults.removePersistentDomain(forName: "ProviderSettingsDescriptorTests-codex")
-        let settings = SettingsStore(userDefaults: defaults, zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
         let store = UsageStore(fetcher: UsageFetcher(environment: [:]), settings: settings)
 
         let context = ProviderSettingsContext(
             provider: .codex,
             settings: settings,
             store: store,
+            language: .english,
             boolBinding: { keyPath in
                 Binding(
                     get: { settings[keyPath: keyPath] },
@@ -101,13 +109,17 @@ struct ProviderSettingsDescriptorTests {
     func claudeWebExtrasToggleIsVisibleOnlyForCLIDataSource() {
         let defaults = UserDefaults(suiteName: "ProviderSettingsDescriptorTests-claude")!
         defaults.removePersistentDomain(forName: "ProviderSettingsDescriptorTests-claude")
-        let settings = SettingsStore(userDefaults: defaults, zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
         let store = UsageStore(fetcher: UsageFetcher(environment: [:]), settings: settings)
 
         let context = ProviderSettingsContext(
             provider: .claude,
             settings: settings,
             store: store,
+            language: .english,
             boolBinding: { keyPath in
                 Binding(
                     get: { settings[keyPath: keyPath] },
@@ -139,7 +151,10 @@ struct ProviderSettingsDescriptorTests {
     func claudeWebExtrasAutoDisablesWhenLeavingCLI() {
         let defaults = UserDefaults(suiteName: "ProviderSettingsDescriptorTests-claude-invariant")!
         defaults.removePersistentDomain(forName: "ProviderSettingsDescriptorTests-claude-invariant")
-        let settings = SettingsStore(userDefaults: defaults, zaiTokenStore: NoopZaiTokenStore())
+        let settings = SettingsStore(
+            userDefaults: defaults,
+            zaiTokenStore: NoopZaiTokenStore(),
+            syncAppLanguageToSharedStore: false)
         settings.debugMenuEnabled = true
         settings.claudeUsageDataSource = .cli
         settings.claudeWebExtrasEnabled = true

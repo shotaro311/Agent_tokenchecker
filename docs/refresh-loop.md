@@ -1,22 +1,22 @@
 ---
-summary: "Refresh cadence, background updates, and error handling."
+summary: "更新間隔、バックグラウンド更新、エラーハンドリング。"
 read_when:
-  - Changing refresh cadence, background tasks, or refresh triggers
-  - Investigating refresh timing or stale data behavior
+  - 更新間隔/バックグラウンドタスク/更新トリガーを変更するとき
+  - 更新タイミングや古いデータ挙動を調査するとき
 ---
 
-# Refresh loop
+# 更新ループ
 
-## Cadence
-- `RefreshFrequency`: Manual, 1m, 2m, 5m (default), 15m.
-- Stored in `UserDefaults` via `SettingsStore`.
+## 間隔
+- `RefreshFrequency`: 手動、1分、2分、5分（既定）、15分。
+- `SettingsStore` 経由で `UserDefaults` に保存。
 
-## Behavior
-- Background refresh runs off-main and updates `UsageStore` (usage + credits + optional web scrape).
-- Manual “Refresh now” always available in the menu.
-- Stale/error states dim the icon and surface status in-menu.
+## 挙動
+- バックグラウンド更新はメインスレッド外で実行され、`UsageStore` を更新（使用量 + クレジット + 任意のWebスクレイプ）。
+- メニューの「今すぐ更新」は常に利用可能。
+- 古い/エラー状態ではアイコンが暗くなり、メニュー内に状態を表示。
 
-## Optional future
-- Auto-seed a log if none exists via `codex exec --skip-git-repo-check --json "ping"` (currently not executed).
+## 将来の任意候補
+- ログが無い場合の自動シード: `codex exec --skip-git-repo-check --json "ping"`（現状は未実行）。
 
-See also: `docs/status.md`, `docs/ui.md`.
+関連: `docs/status.md`, `docs/ui.md`。

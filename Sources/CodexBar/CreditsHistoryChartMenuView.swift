@@ -18,18 +18,21 @@ struct CreditsHistoryChartMenuView: View {
 
     private let breakdown: [OpenAIDashboardDailyBreakdown]
     private let width: CGFloat
+    private let language: AppLanguage
     @State private var selectedDayKey: String?
 
-    init(breakdown: [OpenAIDashboardDailyBreakdown], width: CGFloat) {
+    init(breakdown: [OpenAIDashboardDailyBreakdown], width: CGFloat, language: AppLanguage) {
         self.breakdown = breakdown
         self.width = width
+        self.language = language
     }
 
     var body: some View {
+        let l10n = AppLocalization(language: self.language)
         let model = Self.makeModel(from: self.breakdown)
         VStack(alignment: .leading, spacing: 10) {
             if model.points.isEmpty {
-                Text("No credits history data.")
+                Text(l10n.choose("No credits history data.", "クレジット履歴がありません。"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
@@ -98,7 +101,10 @@ struct CreditsHistoryChartMenuView: View {
                 }
 
                 if let total = model.totalCreditsUsed {
-                    Text("Total (30d): \(total.formatted(.number.precision(.fractionLength(0...2)))) credits")
+                    let totalText = self.creditsValueText(total)
+                    Text(l10n.choose(
+                        "Total (30d): \(totalText) credits",
+                        "合計（30日）: \(totalText) クレジット"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -281,21 +287,27 @@ struct CreditsHistoryChartMenuView: View {
     }
 
     private func detailLines(model: Model) -> (primary: String, secondary: String?) {
+        let l10n = AppLocalization(language: self.language)
         guard let key = self.selectedDayKey,
               let day = model.breakdownByDayKey[key],
               let date = Self.dateFromDayKey(key)
         else {
-            return ("Hover a bar for details", nil)
+            return (l10n.choose("Hover a bar for details", "バーにカーソルを合わせると詳細が表示されます"), nil)
         }
 
-        let dayLabel = date.formatted(.dateTime.month(.abbreviated).day())
-        let total = day.totalCreditsUsed.formatted(.number.precision(.fractionLength(0...2)))
+        let dayLabel = date.formatted(.dateTime.month(.abbreviated).day().locale(self.language.locale))
+        let total = self.creditsValueText(day.totalCreditsUsed)
         if day.services.isEmpty {
-            return ("\(dayLabel): \(total) credits", nil)
+            return (l10n.choose(
+                "\(dayLabel): \(total) credits",
+                "\(dayLabel): \(total) クレジット"), nil)
         }
         if day.services.count <= 1, let first = day.services.first {
-            let used = first.creditsUsed.formatted(.number.precision(.fractionLength(0...2)))
-            return ("\(dayLabel): \(used) credits", first.service)
+            let used = self.creditsValueText(first.creditsUsed)
+            let primary = l10n.choose(
+                "\(dayLabel): \(used) credits",
+                "\(dayLabel): \(used) クレジット")
+            return (primary, first.service)
         }
 
         let services = day.services
@@ -304,9 +316,21 @@ struct CreditsHistoryChartMenuView: View {
                 return lhs.creditsUsed > rhs.creditsUsed
             }
             .prefix(3)
-            .map { "\($0.service) \($0.creditsUsed.formatted(.number.precision(.fractionLength(0...2))))" }
+            .map { "\($0.service) \(self.creditsValueText($0.creditsUsed))" }
             .joined(separator: " · ")
 
-        return ("\(dayLabel): \(total) credits", services)
+        let primary = l10n.choose(
+            "\(dayLabel): \(total) credits",
+            "\(dayLabel): \(total) クレジット")
+        return (primary, services)
+    }
+
+    private func creditsValueText(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+        formatter.locale = self.language.locale
+        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
     }
 }

@@ -1,37 +1,37 @@
 ---
-summary: "Convert macOS .icon bundles to CodexBar .icns via Scripts/build_icon.sh and ictool."
+summary: "Scripts/build_icon.sh と ictool で macOS .icon を CodexBar .icns に変換する手順。"
 read_when:
-  - Updating the CodexBar app icon or asset pipeline
-  - Preparing release builds that need a refreshed icns
+  - CodexBarアプリアイコンやアセットパイプラインを更新するとき
+  - リリース用にicnsを更新するとき
 ---
 
-# Icon pipeline (macOS .icon → .icns without Xcodebuild)
+# アイコンパイプライン（macOS .icon → .icns、Xcodebuild不要）
 
-We use the new macOS 26 “glass” `.icon` bundle from Icon Composer/IconStudio and convert it to `.icns` via Xcode’s hidden CLI (ictool/icontool), without an Xcode project.
+Icon Composer/IconStudio の macOS 26「glass」`.icon` バンドルを、Xcodeに内蔵された非公開CLI（ictool/icontool）で `.icns` に変換します。Xcodeプロジェクトは不要です。
 
-## Script
+## スクリプト
 `Scripts/build_icon.sh ICON.icon CodexBar [outdir]`
 
-What it does:
-1) Finds `ictool` (or `icontool`) in `/Applications/Xcode.app/Contents/Applications/Icon Composer.app/Contents/Executables/`.
-2) Renders the macOS Default appearance of the `.icon` to an 824×824 PNG (inner art, glass applied).
-3) Pads to 1024×1024 with transparency (restores Tahoe squircle margin, avoids “white plate”).
-4) Downscales to all required sizes into an `.iconset`.
-5) Runs `iconutil -c icns` → `Icon.icns`.
+処理内容:
+1) `/Applications/Xcode.app/Contents/Applications/Icon Composer.app/Contents/Executables/` から `ictool`（または `icontool`）を見つける。
+2) `.icon` のmacOS既定外観を 824×824 PNG にレンダリング（内部アート + ガラス効果）。
+3) 透明パディングで 1024×1024 に拡張（Tahoeの角丸余白を復元し、白いプレートを回避）。
+4) すべての必要サイズにダウンスケールして `.iconset` を作成。
+5) `iconutil -c icns` で `Icon.icns` を生成。
 
-Requirements:
-- Xcode 26+ installed (IC tool lives inside the Xcode bundle).
-- `sips` and `iconutil` (system tools).
+要件:
+- Xcode 26+ がインストール済み（ICツールはXcodeバンドル内）。
+- `sips` と `iconutil`（システムツール）。
 
-Usage:
+使い方:
 ```bash
 ./Scripts/build_icon.sh Icon.icon CodexBar
 ```
-Outputs `Icon.icns` at repo root.
+リポジトリルートに `Icon.icns` が出力されます。
 
-Why this approach:
-- Naive `sips`/`iconutil` from raw PNGs often leaves a white/grey plate because the inner art is full-bleed. The ictool render + transparent padding matches Xcode’s asset-pipeline output.
+この方式の理由:
+- PNGから素直に `sips` / `iconutil` を使うと、内部アートが全面描画のため白/灰色のプレートが残ることがあります。ictoolのレンダリング + 透明パディングはXcodeのアセットパイプラインと一致します。
 
-Notes:
-- If Xcode is in a nonstandard location, set `XCODE_APP=/path/to/Xcode.app` before running.
-- Script is CI-friendly; no Xcode project needed.
+注意:
+- Xcodeが標準パス以外にある場合は、実行前に `XCODE_APP=/path/to/Xcode.app` を設定してください。
+- スクリプトはCIで利用可能。Xcodeプロジェクトは不要です。
