@@ -23,9 +23,14 @@ public struct CCUsageFetcher: Sendable {
     public func loadTokenSnapshot(
         provider: UsageProvider,
         now: Date = Date(),
-        forceRefresh: Bool = false) async throws -> CCUsageTokenSnapshot
+        forceRefresh: Bool = false,
+        codexSessionsRoot: URL? = nil) async throws -> CCUsageTokenSnapshot
     {
-        guard provider == .codex || provider == .claude else {
+        guard provider == .codex
+            || provider == .codexOwner
+            || provider == .codexMember
+            || provider == .claude
+        else {
             throw CCUsageError.unsupportedProvider(provider)
         }
 
@@ -37,6 +42,7 @@ public struct CCUsageFetcher: Sendable {
         if forceRefresh {
             options.refreshMinIntervalSeconds = 0
         }
+        options.codexSessionsRoot = codexSessionsRoot
         let daily = await Task.detached(priority: .utility) {
             CostUsageScanner.loadDailyReport(
                 provider: provider,

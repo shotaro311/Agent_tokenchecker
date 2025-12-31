@@ -1256,12 +1256,18 @@ extension UsageStore {
         self.tokenErrors.removeAll()
         self.lastTokenFetchAt.removeAll()
         self.tokenFailureGates[.codex]?.reset()
+        self.tokenFailureGates[.codexOwner]?.reset()
+        self.tokenFailureGates[.codexMember]?.reset()
         self.tokenFailureGates[.claude]?.reset()
         return nil
     }
 
     private func refreshTokenUsage(_ provider: UsageProvider, force: Bool) async {
-        guard provider == .codex || provider == .claude else {
+        guard provider == .codex
+            || provider == .codexOwner
+            || provider == .codexMember
+            || provider == .claude
+        else {
             self.tokenSnapshots.removeValue(forKey: provider)
             self.tokenErrors[provider] = nil
             self.tokenFailureGates[provider]?.reset()
@@ -1303,12 +1309,28 @@ extension UsageStore {
         self.tokenCostLogger
             .info("ccusage start provider=\(providerText) force=\(force)")
 
+        let codexSessionsRoot: URL? = {
+            guard provider == .codex || provider == .codexOwner || provider == .codexMember else { return nil }
+            guard let home = self.settings.codexEnvironment(for: provider)["CODEX_HOME"]?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+                !home.isEmpty
+            else {
+                return nil
+            }
+            return URL(fileURLWithPath: home, isDirectory: true)
+                .appendingPathComponent("sessions", isDirectory: true)
+        }()
+
         do {
             let fetcher = self.ccusageFetcher
             let timeoutSeconds = self.tokenFetchTimeout
             let snapshot = try await withThrowingTaskGroup(of: CCUsageTokenSnapshot.self) { group in
                 group.addTask(priority: .utility) {
-                    try await fetcher.loadTokenSnapshot(provider: provider, now: now, forceRefresh: force)
+                    try await fetcher.loadTokenSnapshot(
+                        provider: provider,
+                        now: now,
+                        forceRefresh: force,
+                        codexSessionsRoot: codexSessionsRoot)
                 }
                 group.addTask {
                     try await Task.sleep(nanoseconds: UInt64(timeoutSeconds * 1_000_000_000))

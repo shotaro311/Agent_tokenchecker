@@ -136,7 +136,11 @@ struct GeneralPane: View {
         case .codex, .codexOwner, .codexMember, .claude, .zai, .gemini, .antigravity, .cursor, .factory:
             self.store.metadata(for: provider).displayName
         }
-        guard provider == .claude || provider == .codex else {
+        guard provider == .claude
+            || provider == .codex
+            || provider == .codexOwner
+            || provider == .codexMember
+        else {
             return Text(l10n.choose("\(name): unsupported", "\(name): 未対応"))
                 .font(.footnote)
                 .foregroundStyle(.tertiary)

@@ -41,7 +41,7 @@ enum CostUsageScanner {
 
         switch provider {
         case .codex, .codexOwner, .codexMember:
-            return self.loadCodexDaily(range: range, now: now, options: options)
+            return self.loadCodexDaily(provider: provider, range: range, now: now, options: options)
         case .claude:
             return self.loadClaudeDaily(range: range, now: now, options: options)
         case .zai:
@@ -251,8 +251,13 @@ enum CostUsageScanner {
             lastTotals: previousTotals)
     }
 
-    private static func loadCodexDaily(range: CostUsageDayRange, now: Date, options: Options) -> CCUsageDailyReport {
-        var cache = CostUsageCacheIO.load(provider: .codex, cacheRoot: options.cacheRoot)
+    private static func loadCodexDaily(
+        provider: UsageProvider,
+        range: CostUsageDayRange,
+        now: Date,
+        options: Options) -> CCUsageDailyReport
+    {
+        var cache = CostUsageCacheIO.load(provider: provider, cacheRoot: options.cacheRoot)
         let nowMs = Int64(now.timeIntervalSince1970 * 1000)
 
         let refreshMs = Int64(max(0, options.refreshMinIntervalSeconds) * 1000)
@@ -331,7 +336,7 @@ enum CostUsageScanner {
 
             Self.pruneDays(cache: &cache, sinceKey: range.scanSinceKey, untilKey: range.scanUntilKey)
             cache.lastScanUnixMs = nowMs
-            CostUsageCacheIO.save(provider: .codex, cache: cache, cacheRoot: options.cacheRoot)
+            CostUsageCacheIO.save(provider: provider, cache: cache, cacheRoot: options.cacheRoot)
         }
 
         return Self.buildCodexReportFromCache(cache: cache, range: range)

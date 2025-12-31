@@ -361,7 +361,11 @@ final class SettingsStore {
     // MARK: - Private
 
     func isCCUsageCostUsageEffectivelyEnabled(for provider: UsageProvider) -> Bool {
-        self.ccusageCostUsageEnabled && (provider == .codex || provider == .claude)
+        self.ccusageCostUsageEnabled
+            && (provider == .codex
+                || provider == .codexOwner
+                || provider == .codexMember
+                || provider == .claude)
     }
 
     private static func effectiveProviderOrder(raw: [String]) -> [UsageProvider] {

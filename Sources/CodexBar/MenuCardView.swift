@@ -792,7 +792,11 @@ extension UsageMenuCardView.Model {
         error: String?,
         language: AppLanguage) -> TokenUsageSection?
     {
-        guard provider == .codex || provider == .claude else { return nil }
+        guard provider == .codex
+            || provider == .codexOwner
+            || provider == .codexMember
+            || provider == .claude
+        else { return nil }
         guard enabled else { return nil }
         guard let snapshot else { return nil }
 
